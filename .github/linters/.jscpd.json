@@ -1,5 +1,5 @@
 {
-    "threshold": 5,
+    "threshold": 2,
     "ignore": [
         "**/.git/**",
         "**/charts/*/templates/*/*.yaml",
