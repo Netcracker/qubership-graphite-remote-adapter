@@ -1,6 +1,7 @@
 name-template: 'v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 
+
 categories:
 - title: '💥 Breaking Changes'
   labels:
@@ -43,4 +44,3 @@ version-resolver:
     labels:
     - patch
   default: patch
-
