@@ -1,13 +1,24 @@
 name: Build Artifacts
+
 on:
   release:
     types: [created]
   push:
     branches:
-      - '**'
+    - '**'
+    paths-ignore:
+    - '.github/**'
+    - 'docs/**'
+    - '*.md'
+    - 'LICENSE'
   pull_request:
     branches:
-      - '**'
+    - '**'
+    paths-ignore:
+    - '.github/**'
+    - 'docs/**'
+    - '*.md'
+    - 'LICENSE'
 
 concurrency:
   # On main/release, we don't want any jobs cancelled so the sha is used to name the group
@@ -25,6 +36,7 @@ jobs:
         component:
           - name: qubership-graphite-remote-adapter
             file: Dockerfile
+            context: .
     runs-on: ubuntu-latest
     name: ${{ matrix.component.name }}
     steps:
