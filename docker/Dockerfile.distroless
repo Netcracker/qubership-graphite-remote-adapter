@@ -13,7 +13,10 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM golang:1.24.2-bookworm AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24.2-bookworm AS builder
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /workspace
 
@@ -45,7 +48,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Build
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 GO111MODULE=on \
+RUN CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on \
     CGO_LDFLAGS="-L/usr/lib/x86_64-linux-gnu/ -l:liblz4.a" \
     CGO_CPPFLAGS="/usr/include/" \
     go build \
