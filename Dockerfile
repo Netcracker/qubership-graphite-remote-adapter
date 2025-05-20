@@ -44,11 +44,11 @@ RUN apk add --no-cache \
         make=4.4.1-r2 \
         build-base=0.5-r3 \
         lz4-dev=1.10.0-r0 \
-        lz4=1.10.0-r0
+        lz4=1.10.0-r0 \
+        aarch64-linux-musl-gcc
 
-RUN apt-get update && apt-get install -y gcc-aarch64-linux-gnu        
 # Build
-RUN CGO_ENABLED=1 CC=gcc-aarch64-linux-gnu GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build \
+RUN CGO_ENABLED=1 CC=aarch64-linux-musl-gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build \
     -v -o /build/graphite-remote-adapter \
     -gcflags all=-trimpath=${GOPATH} \
     -asmflags all=-trimpath=${GOPATH} \
