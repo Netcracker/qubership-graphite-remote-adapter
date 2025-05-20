@@ -45,7 +45,7 @@ RUN apk add --no-cache \
         build-base=0.5-r3 \
         lz4-dev=1.10.0-r0 \
         lz4=1.10.0-r0 \
-        aarch64-linux-musl-gcc
+        crossbuild-essential-aarch64
 
 # Build
 RUN CGO_ENABLED=1 CC=aarch64-linux-musl-gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build \
