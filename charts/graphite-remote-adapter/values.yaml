@@ -119,8 +119,8 @@ writeCarbonAddress: localhost:9999
 #
 # Type: string
 # Mandatory: no
-# Default: http://guest:guest@localhost:8080
-readUrl: "http://guest:guest@localhost:8080"
+# Default: http://<username>:<password>@localhost:8080
+readUrl: "http://localhost:8080"
 
 ## The prefix to prepend to all metrics exported to Graphite.
 #
