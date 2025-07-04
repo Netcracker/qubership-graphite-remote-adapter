@@ -16,11 +16,11 @@
 package config
 
 import (
-	"github.com/alecthomas/kingpin/v2"
+	kgp "github.com/alecthomas/kingpin/v2"
 )
 
 // AddCommandLine setup Graphite specific cli args and flags.
-func AddCommandLine(app *kingpin.Application, cfg *Config) {
+func AddCommandLine(app *kgp.Application, cfg *Config) {
 	app.Flag("graphite.default-prefix",
 		"The prefix to prepend to all metrics exported to Graphite.").
 		StringVar(&cfg.DefaultPrefix)

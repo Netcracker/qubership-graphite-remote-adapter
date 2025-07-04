@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package graphite
+package test
 
 import (
 	"bufio"
@@ -27,8 +27,8 @@ import (
 	"sync"
 	"testing"
 
-	"graphite-remote-adapter/utils/lz4"
-	"graphite-remote-adapter/web"
+	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/lz4"
+	"github.com/Netcracker/qubership-graphite-remote-adapter/web"
 
 	graphiteconfig "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"

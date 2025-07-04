@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-package graphite
+package test
 
 import (
 	"bytes"
@@ -26,6 +26,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 	"golang.org/x/net/context"
+
+	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 )
 
 var (
@@ -39,7 +41,7 @@ var (
 	}
 )
 
-func TakeFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func testFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/metrics/expand?format=json&leavesOnly=1&query=prometheus-prefix.test.%2A%2A" {
 		body.WriteString("{\"results\": [\"prometheus-prefix.test.owner.team-X\", \"prometheus-prefix.test.owner.team-Y\"]}")
@@ -47,7 +49,7 @@ func TakeFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, 
 	return body.Bytes(), nil
 }
 
-func TestFetchRenderURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func testFetchRenderURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/render/?format=json&from=0&target=prometheus-prefix.test.owner.team-X&until=300" {
 		body.WriteString("[{\"target\": \"prometheus-prefix.test.owner.team-X\", \"datapoints\": [[18,0], [42,300]]}]")
@@ -61,7 +63,7 @@ func TestFetchRenderURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, 
 }
 
 func TestQueryToTargets(t *testing.T) {
-	fetchURL = TestFetchExpandURL
+	graphite.FetchURL = testFetchExpandURL
 	expectedTargets := []string{"prometheus-prefix.test.owner.team-X", "prometheus-prefix.test.owner.team-Y"}
 
 	labelMatchers := []*prompb.LabelMatcher{
@@ -78,7 +80,7 @@ func TestQueryToTargets(t *testing.T) {
 		Matchers:         labelMatchers,
 	}
 
-	actualTargets, _ := testClient.queryToTargets(context.TODO(), query, testClient.cfg.DefaultPrefix)
+	actualTargets, _ := testClient.QueryToTargets(context.TODO(), query, testClient.Cfg().DefaultPrefix)
 	if !reflect.DeepEqual(expectedTargets, actualTargets) {
 		t.Errorf("Expected %s, got %s", expectedTargets, actualTargets)
 	}
@@ -96,20 +98,20 @@ func TestInvalidQueryToTargets(t *testing.T) {
 		Matchers:         labelMatchers,
 	}
 
-	_, err := testClient.queryToTargets(context.TODO(), invalidQuery, testClient.cfg.DefaultPrefix)
+	_, err := testClient.QueryToTargets(context.TODO(), invalidQuery, testClient.Cfg().DefaultPrefix)
 	if !reflect.DeepEqual(err, expectedErr) {
 		t.Errorf("Error from queryToTargets not returned.  Expected %v, got %v", expectedErr, err)
 	}
 }
 
 func TestTargetToTimeseries(t *testing.T) {
-	fetchURL = TestFetchRenderURL
+	graphite.FetchURL = testFetchRenderURL
 	expectedTs := &prompb.TimeSeries{
 		Labels:  expectedLabels,
 		Samples: expectedSamples,
 	}
 
-	actualTs, err := testClient.targetToTimeseries(context.TODO(), "prometheus-prefix.test.owner.team-X", "0", "300", testClient.cfg.DefaultPrefix)
+	actualTs, err := testClient.TargetToTimeseries(context.TODO(), "prometheus-prefix.test.owner.team-X", "0", "300", testClient.Cfg().DefaultPrefix)
 	if !reflect.DeepEqual(err, nil) {
 		t.Errorf("Expected no err, got %s", err)
 	}
@@ -119,7 +121,7 @@ func TestTargetToTimeseries(t *testing.T) {
 }
 
 func TestQueryTargetsWithTags(t *testing.T) {
-	fetchURL = TestFetchRenderURL
+	graphite.FetchURL = testFetchRenderURL
 
 	labelMatchers := []*prompb.LabelMatcher{
 		{Type: prompb.LabelMatcher_EQ, Name: model.MetricNameLabel, Value: "test"},
@@ -150,8 +152,8 @@ func TestQueryTargetsWithTags(t *testing.T) {
 		},
 	}
 
-	testClient.cfg.EnableTags = true
-	targets, err := testClient.queryToTargetsWithTags(context.TODO(), query, testClient.cfg.DefaultPrefix)
+	testClient.Cfg().EnableTags = true
+	targets, err := testClient.QueryToTargetsWithTags(context.TODO(), query, testClient.Cfg().DefaultPrefix)
 	if err != nil {
 		t.Errorf("Unexpected err: %s", err)
 	}
@@ -159,8 +161,8 @@ func TestQueryTargetsWithTags(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expectedTargets, targets)
 	}
 
-	actualTs, err := testClient.targetToTimeseries(context.TODO(), targets[0], "0", "300", testClient.cfg.DefaultPrefix)
-	testClient.cfg.EnableTags = false
+	actualTs, err := testClient.TargetToTimeseries(context.TODO(), targets[0], "0", "300", testClient.Cfg().DefaultPrefix)
+	testClient.Cfg().EnableTags = false
 	if err != nil {
 		t.Errorf("Unexpected err: %s", err)
 	}

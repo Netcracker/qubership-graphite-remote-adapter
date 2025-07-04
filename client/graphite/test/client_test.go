@@ -13,35 +13,35 @@
 // limitations under the License.
 //
 
-package graphite
+package test
 
 import (
 	"net/http"
 	"reflect"
 	"testing"
 
-	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
+	graphiteClient "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
+	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/go-kit/log"
 )
 
 var (
-	testClient = &Client{
-		logger: log.NewNopLogger(),
-		cfg: &config.Config{
+	testClient = graphiteClient.NewClientGraphiteCfg(
+		&graphiteCfg.Config{
 			DefaultPrefix: "prometheus-prefix.",
-			Write:         config.WriteConfig{},
-			Read: config.ReadConfig{
+			Write:         graphiteCfg.WriteConfig{},
+			Read: graphiteCfg.ReadConfig{
 				URL: "http://testHost:6666",
 			},
 		},
-	}
+		log.NewNopLogger())
 )
 
 func TestGetGraphitePrefix(t *testing.T) {
 	TestRequest, _ := http.NewRequest("POST", "http://testHost:6666", nil)
-	expectedPrefix := testClient.cfg.DefaultPrefix
+	expectedPrefix := testClient.Cfg().DefaultPrefix
 
-	actualPrefix := testClient.cfg.StoragePrefixFromRequest(TestRequest)
+	actualPrefix := testClient.Cfg().StoragePrefixFromRequest(TestRequest)
 	if !reflect.DeepEqual(expectedPrefix, actualPrefix) {
 		t.Errorf("Expected %s, got %s", expectedPrefix, actualPrefix)
 	}
@@ -51,7 +51,7 @@ func TestGetCustomGraphitePrefix(t *testing.T) {
 	TestRequest, _ := http.NewRequest("POST", "http://testHost:6666?graphite.default-prefix=foo.bar.custom.", nil)
 	expectedPrefix := "foo.bar.custom."
 
-	actualPrefix := testClient.cfg.StoragePrefixFromRequest(TestRequest)
+	actualPrefix := testClient.Cfg().StoragePrefixFromRequest(TestRequest)
 	if !reflect.DeepEqual(expectedPrefix, actualPrefix) {
 		t.Errorf("Expected %s, got %s", expectedPrefix, actualPrefix)
 	}

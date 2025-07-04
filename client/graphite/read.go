@@ -33,7 +33,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func (client *Client) queryToTargets(ctx context.Context, query *prompb.Query, graphitePrefix string) ([]string, error) {
+func (client *Client) QueryToTargets(ctx context.Context, query *prompb.Query, graphitePrefix string) ([]string, error) {
 	// Parse metric name from query
 	var name string
 
@@ -50,7 +50,7 @@ func (client *Client) queryToTargets(ctx context.Context, query *prompb.Query, g
 
 	// Prepare the url to fetch
 	queryStr := graphitePrefix + name + ".**"
-	expandURL, err := prepareURL(client.cfg.Read.URL, expandEndpoint, map[string]string{"format": "json", "leavesOnly": "1", "query": queryStr})
+	expandURL, err := PrepareURL(client.cfg.Read.URL, expandEndpoint, map[string]string{"format": "json", "leavesOnly": "1", "query": queryStr})
 	if err != nil {
 		_ = level.Warn(client.logger).Log(
 			"graphite_web", client.cfg.Read.URL, "path", expandEndpoint,
@@ -60,7 +60,7 @@ func (client *Client) queryToTargets(ctx context.Context, query *prompb.Query, g
 
 	// Get the list of targets
 	expandResponse := ExpandResponse{}
-	body, err := fetchURL(ctx, client.logger, expandURL)
+	body, err := FetchURL(ctx, client.logger, expandURL)
 	if err != nil {
 		_ = level.Warn(client.logger).Log(
 			"url", expandURL, "body", utils.TruncateString(string(body), 140)+"...",
@@ -80,7 +80,7 @@ func (client *Client) queryToTargets(ctx context.Context, query *prompb.Query, g
 	return targets, err
 }
 
-func (client *Client) queryToTargetsWithTags(ctx context.Context, query *prompb.Query, graphitePrefix string) ([]string, error) {
+func (client *Client) QueryToTargetsWithTags(ctx context.Context, query *prompb.Query, graphitePrefix string) ([]string, error) {
 	var tagSet []string
 
 	for _, m := range query.Matchers {
@@ -156,8 +156,8 @@ func (client *Client) filterTargets(query *prompb.Query, targets []string, graph
 	return results, nil
 }
 
-func (client *Client) targetToTimeseries(ctx context.Context, target string, from string, until string, graphitePrefix string) ([]*prompb.TimeSeries, error) {
-	renderURL, err := prepareURL(client.cfg.Read.URL, renderEndpoint, map[string]string{"format": "json", "from": from, "until": until, "target": target})
+func (client *Client) TargetToTimeseries(ctx context.Context, target string, from string, until string, graphitePrefix string) ([]*prompb.TimeSeries, error) {
+	renderURL, err := PrepareURL(client.cfg.Read.URL, renderEndpoint, map[string]string{"format": "json", "from": from, "until": until, "target": target})
 	if err != nil {
 		_ = level.Warn(client.logger).Log(
 			"graphite_web", client.cfg.Read.URL, "path", renderEndpoint,
@@ -166,7 +166,7 @@ func (client *Client) targetToTimeseries(ctx context.Context, target string, fro
 	}
 
 	renderResponses := make([]RenderResponse, 0)
-	body, err := fetchURL(ctx, client.logger, renderURL)
+	body, err := FetchURL(ctx, client.logger, renderURL)
 	if err != nil {
 		_ = level.Warn(client.logger).Log(
 			"url", renderURL, "body", utils.TruncateString(string(body), 140)+"...",
@@ -267,10 +267,10 @@ func (client *Client) handleReadQuery(ctx context.Context, query *prompb.Query, 
 	var err error
 
 	if client.cfg.EnableTags {
-		targets, err = client.queryToTargetsWithTags(ctx, query, graphitePrefix)
+		targets, err = client.QueryToTargetsWithTags(ctx, query, graphitePrefix)
 	} else {
 		// If we don't have tags we try to emulate then with normal paths.
-		targets, err = client.queryToTargets(ctx, query, graphitePrefix)
+		targets, err = client.QueryToTargets(ctx, query, graphitePrefix)
 	}
 	if err != nil {
 		return nil, err
@@ -300,7 +300,7 @@ func (client *Client) fetchData(ctx context.Context, queryResult *prompb.QueryRe
 			for target := range input {
 				// We simply ignore errors here as it is better to return "some" data
 				// than nothing.
-				ts, err := client.targetToTimeseries(ctx, target, fromStr, untilStr, graphitePrefix)
+				ts, err := client.TargetToTimeseries(ctx, target, fromStr, untilStr, graphitePrefix)
 				if err != nil {
 					_ = level.Warn(client.logger).Log("target", target, "err", err, "msg", "Error fetching and parsing target datapoints")
 				} else {
