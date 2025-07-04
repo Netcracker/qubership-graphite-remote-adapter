@@ -39,7 +39,7 @@ var (
 	}
 )
 
-func TakeFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func TestFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/metrics/expand?format=json&leavesOnly=1&query=prometheus-prefix.test.%2A%2A" {
 		body.WriteString("{\"results\": [\"prometheus-prefix.test.owner.team-X\", \"prometheus-prefix.test.owner.team-Y\"]}")
