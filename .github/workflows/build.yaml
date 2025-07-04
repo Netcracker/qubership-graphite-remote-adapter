@@ -38,6 +38,8 @@ jobs:
             file: Dockerfile
             context: .
     runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "1"
     name: ${{ matrix.component.name }}
     steps:
       - name: Checkout
