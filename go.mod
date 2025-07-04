@@ -2,7 +2,7 @@ module github.com/Netcracker/qubership-graphite-remote-adapter
 
 go 1.23.0
 
-toolchain go1.24.1
+//toolchain go1.24.1
 
 require (
 	dario.cat/mergo v1.0.2
