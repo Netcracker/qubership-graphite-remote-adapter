@@ -86,6 +86,11 @@ jobs:
           grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
+    - name: Install GCC (needed for CGO)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
     - name: Lint Code Base
       uses: super-linter/super-linter/slim@v7.4.0
       env:
@@ -93,5 +98,4 @@ jobs:
         # To report GitHub Actions status checks
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         FILTER_REGEX_EXCLUDE: ".*\\.sz$"
-        DISABLE_LINTERS: GOLANGCI-LINT
         CGO_ENABLED: "1"
