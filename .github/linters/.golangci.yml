@@ -1,8 +1,6 @@
 version: "2"
 run:
   timeout: 10m
-  skip-files:
-    - ".*\\.sz$"
 linters:
   disable:
-    - goanalysis_metalinter
+    - staticcheck
