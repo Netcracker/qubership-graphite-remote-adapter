@@ -165,6 +165,10 @@ func (client *Client) Write(samples model.Samples, reqBufLen int, r *http.Reques
 			if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) {
 				_ = level.Error(client.logger).Log("msg", "Pipe is broken. Connection closed")
 			}
+			err = pipeReader.Close()
+			if err != nil {
+				_ = level.Error(client.logger).Log("err", err.Error(), "msg", "failed to close pipe reader")
+			}
 			client.disconnectFromCarbon()
 			return nil, err
 		}
@@ -185,12 +189,19 @@ func (client *Client) compressLZ4(pipeWriter *io.PipeWriter, buf *bytes.Buffer) 
 	lz4Writer, err = lz4.NewWriter(pipeWriter, client.logger, client.cfg.Write.CompressLZ4Preferences)
 	if err != nil {
 		_ = level.Error(client.logger).Log("err", err)
+		return
 	}
 	defer func(lz4Writer *lz4.Writer) {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic occurred: %v", r)
+			_ = level.Error(client.logger).Log("err", err.Error())
+		}
 		errClose := lz4Writer.Close()
 		if errClose != nil {
 			_ = level.Error(client.logger).Log("err", errClose.Error(), "msg", "failed to close pipe writer")
-			err = errClose
+			if err == nil {
+				err = errClose
+			}
 		}
 	}(lz4Writer) // Make sure the writer is closed
 

@@ -40,10 +40,13 @@ import "C"
 
 // Writer is a wrapper around an io.Writer that compresses data using lz4frame c library before writing it.
 type Writer struct {
-	logger      log.Logger
-	writer      io.Writer
-	ctx         *C.LZ4F_cctx
-	preferences *C.LZ4F_preferences_t
+	logger           log.Logger
+	writer           io.Writer
+	ctx              *C.LZ4F_cctx
+	preferences      *C.LZ4F_preferences_t
+	outputBufferSize int
+	inputBuffer      []byte
+	outputBuffer     []byte
 }
 
 // NewWriter creates a new Writer with the given underlying io.Writer and compression preferences.
@@ -105,11 +108,17 @@ func NewWriter(writer io.Writer, logger log.Logger, cfg *config.LZ4Preferences) 
 		autoFlush:        autoFlush,
 		favorDecSpeed:    decompressionSpeed,
 	}
+
+	outputBufferSize := int(C.LZ4F_compressBound(C.size_t(blockSizeId), &preferences)) // Use LZ4F_compressBound to get the maximum output size
+
 	return &Writer{
-		logger:      logger,
-		writer:      writer,
-		ctx:         ctx,
-		preferences: &preferences,
+		logger:           logger,
+		writer:           writer,
+		ctx:              ctx,
+		preferences:      &preferences,
+		inputBuffer:      make([]byte, outputBufferSize),
+		outputBuffer:     make([]byte, outputBufferSize),
+		outputBufferSize: outputBufferSize,
 	}, nil
 }
 
@@ -117,11 +126,8 @@ func NewWriter(writer io.Writer, logger log.Logger, cfg *config.LZ4Preferences) 
 // It returns the number of bytes written and any error encountered.
 func (writer *Writer) Write(inputData []byte) (int, error) {
 	// Start the frame
-	outputBufferSize := int(C.LZ4F_compressBound(C.size_t(len(inputData)), writer.preferences)) // Use LZ4F_compressBound to get the maximum output size
-	outputBuffer := make([]byte, outputBufferSize)                                              // Allocate output buffer
-	inputBuffer := make([]byte, outputBufferSize)                                               // Allocate input buffer
-	outputPtr := unsafe.Pointer(&outputBuffer[0])                                               // Create a C pointer to the output buffer
-	headerSize := C.LZ4F_compressBegin(writer.ctx, outputPtr, C.size_t(outputBufferSize), writer.preferences)
+	outputPtr := unsafe.Pointer(&writer.outputBuffer[0]) // Create a C pointer to the output buffer
+	headerSize := C.LZ4F_compressBegin(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), writer.preferences)
 	if C.LZ4F_isError(headerSize) != 0 {
 		err := errors.New(C.GoString(C.LZ4F_getErrorName(headerSize)))
 		_ = level.Error(writer.logger).Log("err", err, "msg", "error creating frame")
@@ -129,7 +135,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 	}
 
 	// Write the frame header to the destination file
-	sent, err := writer.writer.Write(outputBuffer[:uint64(headerSize)])
+	sent, err := writer.writer.Write(writer.outputBuffer[:uint64(headerSize)])
 	if err != nil {
 		_ = level.Error(writer.logger).Log("err", err, "msg", "error writing frame header")
 		return 0, err
@@ -152,7 +158,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 	var m int
 	for {
 		// Read a chunk of data from the source
-		m, err = reader.Read(inputBuffer)
+		m, err = reader.Read(writer.inputBuffer)
 		if err != nil && err != io.EOF {
 			_ = level.Error(writer.logger).Log("err", err, "msg", "error reading source")
 			return 0, err
@@ -162,7 +168,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 		}
 
 		// Compress the chunk of data
-		compressedSize := C.LZ4F_compressUpdate(writer.ctx, outputPtr, C.size_t(outputBufferSize), unsafe.Pointer(&inputBuffer[0]), C.size_t(m), nil)
+		compressedSize := C.LZ4F_compressUpdate(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), unsafe.Pointer(&writer.inputBuffer[0]), C.size_t(m), nil)
 		if C.LZ4F_isError(compressedSize) != 0 {
 			err = errors.New(C.GoString(C.LZ4F_getErrorName(compressedSize)))
 			_ = level.Error(writer.logger).Log("err", err, "msg", "error compressing data")
@@ -175,7 +181,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 		}
 
 		// Write the compressed data to the destination file
-		sent, err = writer.writer.Write(outputBuffer[:uint64(compressedSize)])
+		sent, err = writer.writer.Write(writer.outputBuffer[:uint64(compressedSize)])
 		if err != nil {
 			_ = level.Error(writer.logger).Log("err", err, "msg", "error writing compressed data")
 			return 0, err
@@ -192,7 +198,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 	}
 
 	// End the frame
-	tailSize := C.LZ4F_compressEnd(writer.ctx, outputPtr, C.size_t(outputBufferSize), nil)
+	tailSize := C.LZ4F_compressEnd(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), nil)
 	if C.LZ4F_isError(tailSize) != 0 {
 		err = errors.New(C.GoString(C.LZ4F_getErrorName(tailSize)))
 		_ = level.Error(writer.logger).Log("err", err, "msg", "error ending frame")
@@ -200,7 +206,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 	}
 
 	// Write the frame footer to the destination file
-	sent, err = writer.writer.Write(outputBuffer[:uint64(tailSize)])
+	sent, err = writer.writer.Write(writer.outputBuffer[:uint64(tailSize)])
 	if err != nil {
 		_ = level.Error(writer.logger).Log("err", err, "msg", "error writing frame footer")
 		return 0, err
