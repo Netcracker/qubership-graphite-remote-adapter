@@ -86,11 +86,6 @@ jobs:
           grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
-    - name: Install GCC (needed for CGO)
-        run: |
-          apt-get update
-          apt-get install -y build-essential
-
     - name: Lint Code Base
       uses: super-linter/super-linter/slim@v7.4.0
       env:
