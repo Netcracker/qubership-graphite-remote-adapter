@@ -31,8 +31,6 @@ permissions:
 jobs:
   prepare-configs:
     runs-on: ubuntu-latest
-    env:
-      CGO_ENABLED: "1"
     steps:
     - name: "Get the common linters configuration"
       uses: actions/checkout@v4
@@ -50,8 +48,6 @@ jobs:
   run-lint:
     needs: [prepare-configs]
     runs-on: ubuntu-latest
-    env:
-      CGO_ENABLED: "1"
     permissions:
       contents: read
       packages: read

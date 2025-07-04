@@ -40,7 +40,7 @@ func TestEscape(t *testing.T) {
 func TestEscapeTags(t *testing.T) {
 	// Can we correctly keep and escape valid chars.
 	value := "abzABZ019(){c=\"h/v0.0.0 (linux/amd64) k8s/$f\",c=\"200\",ct=\"app/vnd.k8s.p;s=w\",e=\"https\",i=\"10.0.0.0:8443\"},'\"\\"
-	expected := "abzABZ019\\(\\)\\{c%3D\\\"h%2Fv0%2E0%2E0%20\\(linux%2Famd64\\)%20k8s%2F$f\\\"\\,c%3D\\\"200\\\"\\,ct%3D\\\"app%2Fvnd%2Ek8s%2Ep;s%3Dw\\\"\\,e%3D\\\"https\\\"\\,i%3D\\\"192%2E168%2E234%2E5:8443\\\"\\}\\,\\'\\\"\\\\"
+	expected := "abzABZ019\\(\\)\\{c%3D\\\"h%2Fv0%2E0%2E0%20\\(linux%2Famd64\\)%20k8s%2F$f\\\"\\,c%3D\\\"200\\\"\\,ct%3D\\\"app%2Fvnd%2Ek8s%2Ep;s%3Dw\\\"\\,e%3D\\\"https\\\"\\,i%3D\\\"10%2E0%2E0%2E0:8443\\\"\\}\\,\\'\\\"\\\\"
 	actual := Escape(value)
 	if expected != string(actual) {
 		t.Errorf("Expected %s, got %s", expected, actual)

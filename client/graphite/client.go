@@ -95,6 +95,14 @@ func NewClient(cfg *config.Config, logger log.Logger) *Client {
 	}
 }
 
+// NewClient returns a new Client.
+func NewClientGraphiteCfg(cfg *graphiteCfg.Config, logger log.Logger) *Client {
+	return &Client{
+		logger: logger,
+		cfg:    cfg,
+	}
+}
+
 // Shutdown the client.
 func (client *Client) Shutdown() {
 	client.carbonConLock.Lock()
@@ -119,4 +127,10 @@ func (client *Client) Target() string {
 func (client *Client) String() string {
 	// TODO: add more stuff here.
 	return client.cfg.String()
+}
+
+// String implements the client.Client interface.
+func (client *Client) Cfg() *graphiteCfg.Config {
+	// TODO: add more stuff here.
+	return client.cfg
 }
