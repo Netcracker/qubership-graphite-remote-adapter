@@ -67,6 +67,8 @@ RUN chmod +x /bin/graphite-remote-adapter \
 
 RUN apk add --no-cache lz4-libs=1.10.0-r0
 
-WORKDIR /graphite-remote-adapter
+WORKDIR /
 
 USER ${USER_UID}
+
+ENTRYPOINT [ "/bin/graphite-remote-adapter" ]
