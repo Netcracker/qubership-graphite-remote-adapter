@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM golang:1.24-alpine3.21 AS builder
+FROM golang:1.24.5-alpine3.22 AS builder
 
 WORKDIR /workspace
 
@@ -33,12 +33,10 @@ COPY ui/ ui/
 COPY utils/ utils/
 COPY web/ web/
 
-RUN ls -la /workspace
-
 # Install LZ4 libraries to build
 RUN apk add --no-cache \
-        openssl=3.3.3-r0 \
-        make=4.4.1-r2 \
+        openssl=3.5.1-r0 \
+        make=4.4.1-r3 \
         build-base=0.5-r3 \
         lz4-dev=1.10.0-r0 \
         lz4=1.10.0-r0
@@ -58,17 +56,17 @@ ENV USER_UID=2001 \
     GROUP_NAME=appuser
 
 COPY --from=builder --chown=${USER_UID} /build/graphite-remote-adapter /bin/graphite-remote-adapter
-EXPOSE 9092
-VOLUME "/graphite-remote-adapter"
+
+RUN apk add --no-cache lz4-libs=1.10.0-r0
 
 RUN chmod +x /bin/graphite-remote-adapter \
     && addgroup ${GROUP_NAME} \
     && adduser -D -G ${GROUP_NAME} -u ${USER_UID} ${USER_NAME}
 
-RUN apk add --no-cache lz4-libs=1.10.0-r0
-
-WORKDIR /
+EXPOSE 9092
+VOLUME /graphite-remote-adapter
+WORKDIR /graphite-remote-adapter
 
 USER ${USER_UID}
 
-ENTRYPOINT [ "/bin/graphite-remote-adapter" ]
+ENTRYPOINT ["/bin/graphite-remote-adapter"]
