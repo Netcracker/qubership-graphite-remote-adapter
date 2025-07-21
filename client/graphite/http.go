@@ -23,8 +23,8 @@ import (
 
 // make it mockable in tests
 var (
-	fetchURL   = utils.FetchURL
-	prepareURL = utils.PrepareURL
+	FetchURL   = utils.FetchURL
+	PrepareURL = utils.PrepareURL
 )
 
 // ExpandResponse is a parsed response of graphite expand endpoint.
