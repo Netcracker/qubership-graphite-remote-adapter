@@ -49,7 +49,7 @@ RUN CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=amd64 GO111MODULE=on go build \
     ./
 
 # Use alpine tiny images as a base
-FROM alpine:3.22.0
+FROM alpine:3.22.1
 
 ENV USER_UID=2001 \
     USER_NAME=appuser \
