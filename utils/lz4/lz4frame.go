@@ -109,7 +109,7 @@ func NewWriter(writer io.Writer, logger log.Logger, cfg *config.LZ4Preferences) 
 		favorDecSpeed:    decompressionSpeed,
 	}
 
-	outputBufferSize := int(C.LZ4F_compressBound(C.size_t(blockSizeId), &preferences)) // Use LZ4F_compressBound to get the maximum output size
+	outputBufferSize := int(C.LZ4F_compressBound(C.size_t(C.LZ4F_max256KB), &preferences)) // Use LZ4F_compressBound to get the maximum output size
 
 	return &Writer{
 		logger:           logger,
@@ -126,6 +126,7 @@ func NewWriter(writer io.Writer, logger log.Logger, cfg *config.LZ4Preferences) 
 // It returns the number of bytes written and any error encountered.
 func (writer *Writer) Write(inputData []byte) (int, error) {
 	// Start the frame
+	ensureBuffer(writer, len(inputData))
 	outputPtr := unsafe.Pointer(&writer.outputBuffer[0]) // Create a C pointer to the output buffer
 	headerSize := C.LZ4F_compressBegin(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), writer.preferences)
 	if C.LZ4F_isError(headerSize) != 0 {
@@ -308,4 +309,16 @@ func (reader *Reader) Close() error {
 		return errors.New(C.GoString(C.LZ4F_getErrorName(errCode)))
 	}
 	return nil
+}
+
+func ensureBuffer(writer *Writer, inputSize int) {
+	newOutputBufferSize := int(C.LZ4F_compressBound(C.size_t(inputSize), writer.preferences))
+	if writer.outputBufferSize < newOutputBufferSize {
+		writer.inputBuffer = make([]byte, newOutputBufferSize)
+		writer.outputBuffer = make([]byte, newOutputBufferSize)
+	} else {
+		writer.inputBuffer = writer.inputBuffer[:newOutputBufferSize]
+		writer.outputBuffer = writer.outputBuffer[:newOutputBufferSize]
+	}
+	writer.outputBufferSize = newOutputBufferSize
 }
