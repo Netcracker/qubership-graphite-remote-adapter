@@ -9,6 +9,7 @@
     * [Run graphite-remote-adapter on local machine](#run-graphite-remote-adapter-on-local-machine)
     * [Run test](#run-test)
     * [Generate snappy compressed metric payload](#generate-snappy-compressed-metric-payload)
+  * [Run linter before commit](#run-linter-before-commit)
 
 ## Requirements
 
@@ -122,7 +123,7 @@ Configure you environment to run graphite-remote-adapter:
 
 ### Run test
 
-Use [snappy archive](../../../client/graphite/testdata/req.sz) for sending to graphite-remote-adapter.
+Use [snappy archive](../../../client/graphite/test/testdata/req.sz) for sending to graphite-remote-adapter.
 Send snappy compressed metrics like:
 
 ```bash
@@ -135,7 +136,7 @@ Look through /tmp/metrics.txt
 cat /tmp/metrics.txt
 ```
 
-It is to contain all metrics from [here](../../../client/graphite/testdata/sample.txt)
+It is to contain all metrics from [here](../../../client/graphite/test/testdata/sample.txt)
 
 ### Generate snappy compressed metric payload
 
