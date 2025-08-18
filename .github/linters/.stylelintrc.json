@@ -1,7 +1,7 @@
 {
     "extends": ["stylelint-config-standard"],
     "ignoreFiles": [
-      "**/ui/static/css/font-awesome.min.css",
-      "**/ui/static/css/bootstrap-lumen.min.css"
+      "ui/static/css/font-awesome.min.css",
+      "ui/static/css/bootstrap-lumen.min.css"
     ]
 }
