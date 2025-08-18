@@ -1,3 +1,4 @@
+// Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
 // Copyright 2024-2025 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

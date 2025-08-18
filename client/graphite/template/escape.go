@@ -1,3 +1,4 @@
+// Copyright 2015 The Prometheus Authors
 // Copyright 2024-2025 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

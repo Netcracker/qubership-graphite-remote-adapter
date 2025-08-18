@@ -246,7 +246,7 @@ remote_adapter_api_response_size_bytes_sum{handler="write"} 1.27758e+06
 remote_adapter_api_response_size_bytes_count{handler="write"} 63879
 # HELP remote_adapter_received_samples_total Total number of received samples.
 # TYPE remote_adapter_received_samples_total counter
-remote_adapter_received_samples_total{prefix="test.paas_miniha_kubernetes."} 6.268375e+06
+remote_adapter_received_samples_total{prefix="test.miniha_kubernetes."} 6.268375e+06
 # HELP remote_adapter_sent_batch_duration_seconds Duration of sample batch send calls to the remote storage.
 # TYPE remote_adapter_sent_batch_duration_seconds histogram
 remote_adapter_sent_batch_duration_seconds_bucket{remote="10.0.0.0:2003",le="0.005"} 24169
@@ -265,5 +265,5 @@ remote_adapter_sent_batch_duration_seconds_sum{remote="10.0.0.0:2003"} 157999.59
 remote_adapter_sent_batch_duration_seconds_count{remote="10.0.0.0:2003"} 63879
 # HELP remote_adapter_sent_samples_total Total number of processed samples sent to remote storage.
 # TYPE remote_adapter_sent_samples_total counter
-remote_adapter_sent_samples_total{prefix="test.paas_miniha_kubernetes.",remote="10.0.0.0:2003"} 6.268375e+06
+remote_adapter_sent_samples_total{prefix="test.miniha_kubernetes.",remote="10.0.0.0:2003"} 6.268375e+06
 ```

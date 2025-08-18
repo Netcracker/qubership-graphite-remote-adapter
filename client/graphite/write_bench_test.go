@@ -90,7 +90,7 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 
 func prepareSamples(n int) (samples model.Samples, bufSize int) {
 	for i := 0; i < n; i++ {
-		metric := model.Metric{model.MetricNameLabel: lName[rand.Intn(20)], "cluster": "paas-kubernetes", "endpoint": "https-metrics",
+		metric := model.Metric{model.MetricNameLabel: lName[rand.Intn(20)], "cluster": "cluster-kubernetes", "endpoint": "https-metrics",
 			"id":    "/systemd/system.slice/kubepods-burstable-podb270ecd5_78cc_4232_9187_1dd035045cb1.slice:cri-containerd:169763650b87dfa9ebb90ee4dc704c57eb38abdd308a930cda1f45aab3bb7e6c",
 			"image": "registry:17001/k8s.gcr.io/pause:3.2", "instance": "169763650b87dfa9ebb90ee4dc704c57eb38abdd308a930cda1f45aab3bb7e6c", "namespace": namespaces[rand.Intn(20)],
 			"pod": namespaces[rand.Intn(20)], "prometheus": "monitoring/k8s", "prometheus_replica": "prometheus-k8s-0", "service": "kubelet", "team": "test_team"}
