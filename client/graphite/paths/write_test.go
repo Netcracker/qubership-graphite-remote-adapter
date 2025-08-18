@@ -39,6 +39,7 @@ var (
 		"many_chars":          "abc!ABC:012-3!45ö67~89./(){},=.\"\\",
 	}
 
+	// editorconfig-checker-disable used because next lines are part of the template
 	testConfigStr = `
 write:
   template_data:
@@ -63,6 +64,7 @@ write:
       owner: team-Z
     continue: false`
 
+	// editorconfig-checker-enable
 	testConfig = loadTestConfig(testConfigStr)
 )
 

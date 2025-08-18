@@ -136,7 +136,7 @@ Look through /tmp/metrics.txt
 cat /tmp/metrics.txt
 ```
 
-It is to contain all metrics from [here](../../../client/graphite/test/testdata/sample.txt)
+It is to contain all metrics from [testdata/sample.txt](../../../client/graphite/test/testdata/sample.txt)
 
 ### Generate snappy compressed metric payload
 
