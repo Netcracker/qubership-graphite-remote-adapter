@@ -166,7 +166,7 @@ func GenerateCompression(t *testing.T) {
     assert.NoError(t, err)
     compressed := snappy.Encode(nil, data)
     assert.NotNil(t, compressed)
-    file, err := os.OpenFile("./testdata/short_req.sz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    file, err := os.OpenFile("./test/testdata/short_req.sz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     _, err = io.Copy(file, bytes.NewReader(compressed))
     assert.NoError(t, err)
     file.Close()
