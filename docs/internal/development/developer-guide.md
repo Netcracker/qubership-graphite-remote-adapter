@@ -122,7 +122,7 @@ Configure you environment to run graphite-remote-adapter:
 
 ### Run test
 
-Use [snappy archive](../../../client/graphite/testdata/req.sz) for sending to graphite-remote-adapter.
+Use [snappy archive](../../../client/graphite/test/testdata/req.sz) for sending to graphite-remote-adapter.
 Send snappy compressed metrics like:
 
 ```bash
@@ -135,7 +135,7 @@ Look through /tmp/metrics.txt
 cat /tmp/metrics.txt
 ```
 
-It is to contain all metrics from [here](../../../client/graphite/testdata/sample.txt)
+It is to contain all metrics from [here](../../../client/graphite/test/testdata/sample.txt)
 
 ### Generate snappy compressed metric payload
 
@@ -165,7 +165,7 @@ func GenerateCompression(t *testing.T) {
     assert.NoError(t, err)
     compressed := snappy.Encode(nil, data)
     assert.NotNil(t, compressed)
-    file, err := os.OpenFile("./testdata/short_req.sz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    file, err := os.OpenFile("./test/testdata/short_req.sz", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     _, err = io.Copy(file, bytes.NewReader(compressed))
     assert.NoError(t, err)
     file.Close()
