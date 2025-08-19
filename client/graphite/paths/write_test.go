@@ -1,3 +1,4 @@
+// Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
 // Copyright 2024-2025 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +39,7 @@ var (
 		"many_chars":          "abc!ABC:012-3!45ö67~89./(){},=.\"\\",
 	}
 
+	// editorconfig-checker-disable used because next lines are part of the template
 	testConfigStr = `
 write:
   template_data:
@@ -62,6 +64,7 @@ write:
       owner: team-Z
     continue: false`
 
+	// editorconfig-checker-enable
 	testConfig = loadTestConfig(testConfigStr)
 )
 
@@ -175,6 +178,7 @@ func TestSkipedTemplatedPathsFromMetric(t *testing.T) {
 }
 
 func TestReplaceNilLabelTemplatedPathsFromMetric(t *testing.T) {
+	// editorconfig-checker-disable used because next lines are part of the template
 	testConfigNilLabelStr := `
 write:
   rules:
@@ -182,7 +186,7 @@ write:
       testlabel: test:value
     template: 'test.{{ replace .labels.doesnotexist " " "_" }}'
     continue: false`
-
+	// editorconfig-checker-enable
 	testConfigNilLabel := loadTestConfig(testConfigNilLabelStr)
 
 	t.Log(testConfigNilLabel.Write.Rules[0])

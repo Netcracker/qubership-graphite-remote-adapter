@@ -13,7 +13,12 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM golang:1.24.5-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24.5-alpine3.22 AS builder
+
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+ARG GOPROXY=""
 
 WORKDIR /workspace
 
@@ -42,7 +47,7 @@ RUN apk add --no-cache \
         lz4=1.10.0-r0
 
 # Build
-RUN CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=amd64 GO111MODULE=on go build \
+RUN CGO_ENABLED=1 CC=gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build \
     -v -o /build/graphite-remote-adapter \
     -gcflags all=-trimpath=${GOPATH} \
     -asmflags all=-trimpath=${GOPATH} \
@@ -57,6 +62,11 @@ ENV USER_UID=2001 \
 
 COPY --from=builder --chown=${USER_UID} /build/graphite-remote-adapter /bin/graphite-remote-adapter
 
+# Copy license and notice files
+COPY NOTICE /usr/share/doc/graphite-remote-adapter/NOTICE
+COPY LICENSE /usr/share/doc/graphite-remote-adapter/LICENSE
+
+# Install runtime dependencies
 RUN apk add --no-cache lz4-libs=1.10.0-r0
 
 RUN chmod +x /bin/graphite-remote-adapter \
