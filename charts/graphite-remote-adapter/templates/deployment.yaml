@@ -49,7 +49,6 @@ spec:
             {{- end }}
           {{- end }}
           args:
-            - /bin/graphite-remote-adapter
             - '--config.file=/graphite-remote-adapter/additionalGraphiteConfig.yaml'
             - '--graphite.write.carbon-address={{ .Values.writeCarbonAddress }}'
             - '--graphite.write.carbon-transport=tcp'
