@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM --platform=$BUILDPLATFORM golang:1.25.1-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.3-alpine3.22 AS builder
 
 ARG BUILDPLATFORM
 ARG TARGETOS
@@ -40,7 +40,7 @@ COPY web/ web/
 
 # Install LZ4 libraries to build
 RUN apk add --no-cache \
-        openssl=3.5.2-r0 \
+        openssl=3.5.4-r0 \
         make=4.4.1-r3 \
         build-base=0.5-r3 \
         lz4-dev=1.10.0-r0 \
