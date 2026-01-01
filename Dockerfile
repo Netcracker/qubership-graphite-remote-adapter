@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM --platform=$BUILDPLATFORM golang:1.25.3-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.22 AS builder
 
 ARG BUILDPLATFORM
 ARG TARGETOS
