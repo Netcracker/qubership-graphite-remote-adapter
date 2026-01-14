@@ -40,6 +40,7 @@ jobs:
           - name: qubership-graphite-remote-adapter
             file: Dockerfile
             context: .
+            description: "Qubership Graphite Remote Storage Adapter"
     runs-on: ubuntu-latest
     name: ${{ matrix.component.name }}
     steps:

@@ -55,9 +55,9 @@ RUN CGO_ENABLED=1 CC=gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go
     -gcflags all=-trimpath=${GOPATH} \
     -asmflags all=-trimpath=${GOPATH} \
     -ldflags="-X 'github.com/prometheus/common/version.Version=$(cat VERSION)' \
-      -X 'github.com/prometheus/common/version.Revision=${GIT_REVISION}' \
-	  -X 'github.com/prometheus/common/version.Branch=${GIT_BRANCH}' \
-	  -X 'github.com/prometheus/common/version.BuildDate=$(date +"%Y%m%d-%H:%M:%S")'" \
+        -X 'github.com/prometheus/common/version.Revision=${GIT_REVISION}' \
+        -X 'github.com/prometheus/common/version.Branch=${GIT_BRANCH}' \
+        -X 'github.com/prometheus/common/version.BuildDate=$(date +"%Y%m%d-%H:%M:%S")'" \
     ./
 
 # Use alpine tiny images as a base
