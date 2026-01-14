@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-kit/log"
+	"log/slog"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
 	"golang.org/x/net/context"
@@ -42,7 +42,7 @@ var (
 	}
 )
 
-func testFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func testFetchExpandURL(ctx context.Context, l *slog.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/metrics/expand?format=json&leavesOnly=1&query=prometheus-prefix.test.%2A%2A" {
 		body.WriteString("{\"results\": [\"prometheus-prefix.test.owner.team-X\", \"prometheus-prefix.test.owner.team-Y\"]}")
@@ -50,7 +50,7 @@ func testFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, 
 	return body.Bytes(), nil
 }
 
-func testFetchRenderURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func testFetchRenderURL(ctx context.Context, l *slog.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/render/?format=json&from=0&target=prometheus-prefix.test.owner.team-X&until=300" {
 		body.WriteString("[{\"target\": \"prometheus-prefix.test.owner.team-X\", \"datapoints\": [[18,0], [42,300]]}]")

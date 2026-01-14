@@ -25,9 +25,9 @@ import (
 	"strconv"
 	"unsafe"
 
+	"log/slog"
+
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 )
 
 /*
@@ -40,7 +40,7 @@ import "C"
 
 // Writer is a wrapper around an io.Writer that compresses data using lz4frame c library before writing it.
 type Writer struct {
-	logger           log.Logger
+	logger           *slog.Logger
 	writer           io.Writer
 	ctx              *C.LZ4F_cctx
 	preferences      *C.LZ4F_preferences_t
@@ -50,13 +50,13 @@ type Writer struct {
 }
 
 // NewWriter creates a new Writer with the given underlying io.Writer and compression preferences.
-func NewWriter(writer io.Writer, logger log.Logger, cfg *config.LZ4Preferences) (*Writer, error) {
+func NewWriter(writer io.Writer, logger *slog.Logger, cfg *config.LZ4Preferences) (*Writer, error) {
 	var ctx *C.LZ4F_cctx
 	// Create a LZ4F compression context
 	errCode := C.LZ4F_createCompressionContext(&ctx, C.LZ4F_getVersion())
 	if C.LZ4F_isError(errCode) != 0 {
 		err := errors.New(C.GoString(C.LZ4F_getErrorName(errCode)))
-		_ = level.Error(logger).Log("err", err, "msg", "error creating compression context")
+		logger.Error("error creating compression context", "err", err)
 		return nil, err
 	}
 
@@ -131,26 +131,26 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 	headerSize := C.LZ4F_compressBegin(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), writer.preferences)
 	if C.LZ4F_isError(headerSize) != 0 {
 		err := errors.New(C.GoString(C.LZ4F_getErrorName(headerSize)))
-		_ = level.Error(writer.logger).Log("err", err, "msg", "error creating frame")
+		writer.logger.Error("error creating frame", "err", err)
 		return 0, err
 	}
 
 	// Write the frame header to the destination file
 	sent, err := writer.writer.Write(writer.outputBuffer[:uint64(headerSize)])
 	if err != nil {
-		_ = level.Error(writer.logger).Log("err", err, "msg", "error writing frame header")
+		writer.logger.Error("error writing frame header", "err", err)
 		return 0, err
 	}
 
 	if uint64(sent) != uint64(headerSize) {
-		_ = level.Error(writer.logger).Log("err", io.ErrShortWrite, "msg", "error writing frame header")
+		writer.logger.Error("error writing frame header", "err", io.ErrShortWrite)
 		return 0, io.ErrShortWrite
 	}
 
-	_ = level.Debug(writer.logger).Log("msg", "input data", "size", strconv.Itoa(len(inputData)))
+	writer.logger.Debug("input data", "size", strconv.Itoa(len(inputData)))
 	var sentOut int
-	_ = level.Debug(writer.logger).Log("msg", "frame header", "size", strconv.FormatUint(uint64(headerSize), 10))
-	_ = level.Debug(writer.logger).Log("msg", "frame sent", "size", strconv.Itoa(sent))
+	writer.logger.Debug("frame header", "size", strconv.FormatUint(uint64(headerSize), 10))
+	writer.logger.Debug("frame sent", "size", strconv.Itoa(sent))
 	sentOut += int(headerSize)
 
 	// convert byte slice to io.Reader
@@ -161,7 +161,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 		// Read a chunk of data from the source
 		m, err = reader.Read(writer.inputBuffer)
 		if err != nil && err != io.EOF {
-			_ = level.Error(writer.logger).Log("err", err, "msg", "error reading source")
+			writer.logger.Error("error reading source", "err", err)
 			return 0, err
 		}
 		if m == 0 {
@@ -172,7 +172,7 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 		compressedSize := C.LZ4F_compressUpdate(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), unsafe.Pointer(&writer.inputBuffer[0]), C.size_t(m), nil)
 		if C.LZ4F_isError(compressedSize) != 0 {
 			err = errors.New(C.GoString(C.LZ4F_getErrorName(compressedSize)))
-			_ = level.Error(writer.logger).Log("err", err, "msg", "error compressing data")
+			writer.logger.Error("error compressing data", "err", err)
 			return 0, err
 		}
 
@@ -184,15 +184,15 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 		// Write the compressed data to the destination file
 		sent, err = writer.writer.Write(writer.outputBuffer[:uint64(compressedSize)])
 		if err != nil {
-			_ = level.Error(writer.logger).Log("err", err, "msg", "error writing compressed data")
+			writer.logger.Error("error writing compressed data", "err", err)
 			return 0, err
 		}
 
-		_ = level.Debug(writer.logger).Log("msg", "frame compressed", "size", strconv.FormatUint(uint64(compressedSize), 10))
-		_ = level.Debug(writer.logger).Log("msg", "frame sent", "size", strconv.Itoa(sent))
+		writer.logger.Debug("frame compressed", "size", strconv.FormatUint(uint64(compressedSize), 10))
+		writer.logger.Debug("frame sent", "size", strconv.Itoa(sent))
 
 		if uint64(sent) != uint64(compressedSize) {
-			_ = level.Error(writer.logger).Log("err", io.ErrShortWrite, "msg", "error writing frame header")
+			writer.logger.Error("error writing frame header", "err", io.ErrShortWrite)
 			return 0, io.ErrShortWrite
 		}
 		sentOut += int(compressedSize)
@@ -202,26 +202,26 @@ func (writer *Writer) Write(inputData []byte) (int, error) {
 	tailSize := C.LZ4F_compressEnd(writer.ctx, outputPtr, C.size_t(writer.outputBufferSize), nil)
 	if C.LZ4F_isError(tailSize) != 0 {
 		err = errors.New(C.GoString(C.LZ4F_getErrorName(tailSize)))
-		_ = level.Error(writer.logger).Log("err", err, "msg", "error ending frame")
+		writer.logger.Error("error ending frame", "err", err)
 		return 0, err
 	}
 
 	// Write the frame footer to the destination file
 	sent, err = writer.writer.Write(writer.outputBuffer[:uint64(tailSize)])
 	if err != nil {
-		_ = level.Error(writer.logger).Log("err", err, "msg", "error writing frame footer")
+		writer.logger.Error("error writing frame footer", "err", err)
 		return 0, err
 	}
-	_ = level.Debug(writer.logger).Log("msg", "frame tail", "size", strconv.FormatUint(uint64(tailSize), 10))
-	_ = level.Debug(writer.logger).Log("msg", "frame sent", "size", strconv.Itoa(sent))
+	writer.logger.Debug("frame tail", "size", strconv.FormatUint(uint64(tailSize), 10))
+	writer.logger.Debug("frame sent", "size", strconv.Itoa(sent))
 
 	if uint64(sent) != uint64(tailSize) {
-		_ = level.Error(writer.logger).Log("err", io.ErrShortWrite, "msg", "error writing frame footer")
+		writer.logger.Error("error writing frame footer", "err", io.ErrShortWrite)
 		return 0, io.ErrShortWrite
 	}
 	sentOut += int(tailSize)
 
-	_ = level.Debug(writer.logger).Log("msg", "compression done", "size", strconv.Itoa(sentOut))
+	writer.logger.Debug("compression done", "size", strconv.Itoa(sentOut))
 
 	return len(inputData), err
 }
@@ -238,7 +238,7 @@ func (writer *Writer) Close() error {
 
 // Reader is a reader that decompresses lz4 streams using lz4frame c library
 type Reader struct {
-	logger log.Logger
+	logger *slog.Logger
 	reader io.Reader    // the underlying reader
 	ctx    *C.LZ4F_dctx // the decompression context
 	buffer []byte       // the buffer to store decompressed data
@@ -247,7 +247,7 @@ type Reader struct {
 }
 
 // NewReader creates a new Reader with the given underlying io.Reader and decompression preferences.
-func NewReader(reader io.Reader, logger log.Logger, bufferSize int) (*Reader, error) {
+func NewReader(reader io.Reader, logger *slog.Logger, bufferSize int) (*Reader, error) {
 	// Create a decompression context
 	var ctx *C.LZ4F_dctx
 	errCode := C.LZ4F_createDecompressionContext(&ctx, C.LZ4F_getVersion())
@@ -297,7 +297,7 @@ func (reader *Reader) Read(p []byte) (int, error) {
 		}
 	}
 
-	_ = level.Info(reader.logger).Log("msg", "decompression done", "received", strconv.Itoa(n))
+	reader.logger.Info("decompression done", "received", strconv.Itoa(n))
 	return n, nil
 }
 

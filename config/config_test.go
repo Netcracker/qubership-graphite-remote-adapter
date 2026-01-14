@@ -21,7 +21,8 @@ import (
 	"time"
 
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
-	"github.com/go-kit/log"
+	"io"
+	"log/slog"
 )
 
 var expectedConf = &Config{
@@ -42,7 +43,7 @@ var expectedConf = &Config{
 }
 
 func TestLoadConfigFile(t *testing.T) {
-	c, err := LoadFile(log.NewNopLogger(), "testdata/conf.good.yml")
+	c, err := LoadFile(slog.New(slog.NewTextHandler(io.Discard, nil)), "testdata/conf.good.yml")
 	if err != nil {
 		t.Fatalf("Error parsing %s: %s", "testdata/conf.good.yml", err)
 	}

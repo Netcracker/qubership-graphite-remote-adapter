@@ -22,8 +22,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"log/slog"
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
 )
@@ -47,8 +46,8 @@ func PrepareURL(schemeHost string, path string, params map[string]string) (*url.
 }
 
 // FetchURL return body of a fetched url.URL
-func FetchURL(ctx context.Context, logger log.Logger, u *url.URL) ([]byte, error) {
-	_ = level.Debug(logger).Log("url", u, "context", ctx, "msg", "Fetching URL")
+func FetchURL(ctx context.Context, logger *slog.Logger, u *url.URL) ([]byte, error) {
+	logger.Debug("Fetching URL", "url", u, "context", ctx)
 
 	hresp, err := ctxhttp.Get(ctx, http.DefaultClient, u.String())
 	if err != nil {
@@ -57,7 +56,7 @@ func FetchURL(ctx context.Context, logger log.Logger, u *url.URL) ([]byte, error
 	defer hresp.Body.Close()
 
 	body, err := io.ReadAll(hresp.Body)
-	_ = level.Debug(logger).Log("len(body)", len(body), "err", err, "msg", "Reading HTTP response body")
+	logger.Debug("Reading HTTP response body", "len(body)", len(body), "err", err)
 	if err != nil {
 		return nil, err
 	}

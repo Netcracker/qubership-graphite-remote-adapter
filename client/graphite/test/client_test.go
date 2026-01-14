@@ -23,7 +23,8 @@ import (
 
 	graphiteClient "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
-	"github.com/go-kit/log"
+	"io"
+	"log/slog"
 )
 
 var (
@@ -35,7 +36,7 @@ var (
 				URL: "http://testHost:6666",
 			},
 		},
-		log.NewNopLogger())
+		slog.New(slog.NewTextHandler(io.Discard, nil)))
 )
 
 func TestGetGraphitePrefix(t *testing.T) {

@@ -22,7 +22,7 @@ import (
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
 	"github.com/prometheus/common/model"
-	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,10 +72,10 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 
 	samples, bufSize := prepareSamples(n)
 
-	lvl := &promlog.AllowedLevel{}
+	lvl := &promslog.AllowedLevel{}
 	err = lvl.Set("error")
 	assert.Empty(b, err)
-	logger := promlog.New(&promlog.Config{Level: lvl, Format: &promlog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: lvl, Format: &promslog.AllowedFormat{}})
 	cfg := &config.DefaultConfig
 	cfg.Graphite.Write.CarbonAddress = "127.0.0.1"
 	client := NewClient(cfg, logger)

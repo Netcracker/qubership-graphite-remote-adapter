@@ -21,7 +21,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-kit/log/level"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/prometheus"
@@ -51,25 +50,24 @@ var (
 func (h *Handler) read(w http.ResponseWriter, r *http.Request) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
-
-	_ = level.Debug(h.logger).Log("request", r, "msg", "Handling /read request")
+	h.logger.Debug("Handling /read request", "request", r)
 	compressed, err := io.ReadAll(r.Body)
 	if err != nil {
-		_ = level.Warn(h.logger).Log("err", err, "msg", "Error reading request body")
+		h.logger.Warn("Error reading request body", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	reqBuf, err := snappy.Decode(nil, compressed)
 	if err != nil {
-		_ = level.Warn(h.logger).Log("err", err, "msg", "Error decoding request body")
+		h.logger.Warn("Error decoding request body", "err", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	var req prompb.ReadRequest
 	if err = proto.Unmarshal(reqBuf, &req); err != nil {
-		_ = level.Warn(h.logger).Log("err", err, "msg", "Error unmarshalling protobuf")
+		h.logger.Warn("Error unmarshalling protobuf", "err", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -85,9 +83,7 @@ func (h *Handler) read(w http.ResponseWriter, r *http.Request) {
 	var resp *prompb.ReadResponse
 	resp, err = reader.Read(&req, r)
 	if err != nil {
-		_ = level.Warn(h.logger).Log(
-			"query", req, "storage", reader.Name(),
-			"err", err, "msg", "Error executing query")
+		h.logger.Warn("Error executing query", "query", req, "storage", reader.Name(), "err", err)
 		failedReads.WithLabelValues(prefix, reader.Target()).Inc()
 		if !h.cfg.Read.IgnoreError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

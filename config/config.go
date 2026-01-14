@@ -24,9 +24,8 @@ import (
 
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/prometheus/common/promlog"
+	"log/slog"
+	"github.com/prometheus/common/promslog"
 	"gopkg.in/yaml.v3"
 )
 
@@ -45,8 +44,8 @@ func Load(s string) (*Config, error) {
 }
 
 // LoadFile parses the given YAML file into a Config.
-func LoadFile(logger log.Logger, filename string) (*Config, error) {
-	_ = level.Info(logger).Log("file", filename, "msg", "Loading configuration file")
+func LoadFile(logger *slog.Logger, filename string) (*Config, error) {
+	logger.Info("Loading configuration file", "file", filename)
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -79,7 +78,7 @@ var DefaultConfig = Config{
 // Config is the top-level configuration.
 type Config struct {
 	ConfigFile string
-	LogLevel   promlog.AllowedLevel
+	LogLevel   promslog.AllowedLevel
 	Web        webOptions      `yaml:"web,omitempty" json:"web,omitempty"`
 	Read       readOptions     `yaml:"read,omitempty" json:"read,omitempty"`
 	Write      writeOptions    `yaml:"write,omitempty" json:"write,omitempty"`

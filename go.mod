@@ -9,7 +9,6 @@ require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/elazarl/go-bindata-assetfs v1.0.1
-	github.com/go-kit/log v0.2.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/snappy v1.0.0
 	github.com/gorilla/mux v1.8.1
@@ -30,6 +29,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect

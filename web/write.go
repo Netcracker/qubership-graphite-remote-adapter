@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/common/model"
@@ -70,7 +69,7 @@ var (
 func (h *Handler) write(w http.ResponseWriter, r *http.Request) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
-	_ = level.Debug(h.logger).Log("request", r.RemoteAddr, r.Method, r.URL, "msg", "Handling /write request")
+	h.logger.Debug("Handling /write request", "remote", r.RemoteAddr, "method", r.Method, "url", r.URL)
 
 	// As default, we expected snappy encoded protobuf.
 	// But for simulation purpose we also accept json.
@@ -139,7 +138,7 @@ func (h *Handler) parseTestWriteRequest(w http.ResponseWriter, r *http.Request) 
 func (h *Handler) parseWriteRequest(w http.ResponseWriter, r *http.Request) (model.Samples, int, error) {
 	req, err := remote.DecodeWriteRequest(r.Body)
 	if err != nil {
-		_ = level.Error(h.logger).Log("msg", "Error decoding remote write request", "err", err.Error())
+		h.logger.Error("Error decoding remote write request", "err", err.Error())
 		return nil, 0, err
 	}
 
@@ -174,9 +173,7 @@ func (h *Handler) instrumentedWriteSamples(
 	msgBytes, err := w.Write(samples, reqBufLen, r, dryRun)
 	duration := time.Since(begin).Seconds()
 	if err != nil {
-		_ = level.Warn(h.logger).Log(
-			"num_samples", len(samples), "storage", w.Name(),
-			"err", err, "msg", "Error sending samples to remote storage")
+		h.logger.Warn("Error sending samples to remote storage", "num_samples", len(samples), "storage", w.Name(), "err", err)
 		return nil, err
 	}
 	sentBatchDuration.WithLabelValues(w.Target()).Observe(duration)

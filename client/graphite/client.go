@@ -25,8 +25,7 @@ import (
 	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/paths"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"log/slog"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -50,21 +49,20 @@ type Client struct {
 	carbonLastReconnectTime time.Time
 	carbonConLock           sync.Mutex
 
-	logger log.Logger
+	logger *slog.Logger
 }
 
 // NewClient returns a new Client.
-func NewClient(cfg *config.Config, logger log.Logger) *Client {
+func NewClient(cfg *config.Config, logger *slog.Logger) *Client {
 	if cfg.Graphite.Write.CarbonAddress == "" && cfg.Graphite.Read.URL == "" {
 		return nil
 	}
 	if cfg.Graphite.Write.EnablePathsCache {
 		paths.InitPathsCache(cfg.Graphite.Write.PathsCacheTTL,
 			cfg.Graphite.Write.PathsCachePurgeInterval)
-		_ = level.Debug(logger).Log(
+		logger.Debug("Paths cache initialized",
 			"PathsCacheTTL", cfg.Graphite.Write.PathsCacheTTL,
-			"PathsCachePurgeInterval", cfg.Graphite.Write.PathsCachePurgeInterval,
-			"msg", "Paths cache initialized")
+			"PathsCachePurgeInterval", cfg.Graphite.Write.PathsCachePurgeInterval)
 	}
 
 	// Which format are we using to write points?
@@ -98,7 +96,7 @@ func NewClient(cfg *config.Config, logger log.Logger) *Client {
 }
 
 // NewClient returns a new Client.
-func NewClientGraphiteCfg(cfg *graphiteCfg.Config, logger log.Logger) *Client {
+func NewClientGraphiteCfg(cfg *graphiteCfg.Config, logger *slog.Logger) *Client {
 	return &Client{
 		logger: logger,
 		cfg:    cfg,
