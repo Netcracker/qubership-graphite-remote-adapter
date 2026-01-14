@@ -64,7 +64,11 @@ jobs:
 
     - name: "Get Go version"
       id: go-version
-      run: echo "::set-output name=version::$(go mod edit -json | jq -r .Go)
+      shell: bash
+      run: |
+        # extract Go version from go.mod (e.g. "1.20") without requiring Go to be installed
+        VERSION=$(grep -E '^go[[:space:]]+[0-9]+' go.mod | awk '{print $2}')
+        echo "version=${VERSION:-}" >> $GITHUB_OUTPUT
 
     - name: Set up Go
       uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
