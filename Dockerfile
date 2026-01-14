@@ -1,4 +1,4 @@
-# Copyright 2024-2025 NetCracker Technology Corporation
+# Copyright 2024-2026 NetCracker Technology Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.22 AS builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
+ARG GIT_REVISION
+ARG GIT_BRANCH
 ARG GOPROXY=""
 
 WORKDIR /workspace
@@ -37,6 +39,7 @@ COPY config/ config/
 COPY ui/ ui/
 COPY utils/ utils/
 COPY web/ web/
+COPY VERSION VERSION
 
 # Install LZ4 libraries to build
 RUN apk add --no-cache \
@@ -51,6 +54,10 @@ RUN CGO_ENABLED=1 CC=gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go
     -v -o /build/graphite-remote-adapter \
     -gcflags all=-trimpath=${GOPATH} \
     -asmflags all=-trimpath=${GOPATH} \
+    -ldflags="-X 'github.com/prometheus/common/version.Version=$(cat VERSION)' \
+      -X 'github.com/prometheus/common/version.Revision=${GIT_REVISION}' \
+	  -X 'github.com/prometheus/common/version.Branch=${GIT_BRANCH}' \
+	  -X 'github.com/prometheus/common/version.BuildDate=$(date +"%Y%m%d-%H:%M:%S")'" \
     ./
 
 # Use alpine tiny images as a base

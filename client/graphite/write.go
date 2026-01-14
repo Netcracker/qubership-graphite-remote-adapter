@@ -1,6 +1,6 @@
 // Copyright 2015 The Prometheus Authors
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -218,5 +218,4 @@ func (client *Client) closePipeWrite(pipeWriter *io.PipeWriter) {
 	if err != nil {
 		client.logger.Error("failed to close pipe writer", "err", err.Error())
 	}
-	return
 }

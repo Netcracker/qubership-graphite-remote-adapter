@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ import (
 	"reflect"
 	"testing"
 
-	graphiteClient "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
-	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"io"
 	"log/slog"
+
+	graphiteClient "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
+	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 )
 
 var (

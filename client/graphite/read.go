@@ -1,6 +1,6 @@
 // Copyright 2015 The Prometheus Authors
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,12 +26,13 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/paths"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils"
 	"github.com/prometheus/common/model"
 	plabels "github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/prompb"
-	"golang.org/x/net/context"
 )
 
 func (client *Client) QueryToTargets(ctx context.Context, query *prompb.Query, graphitePrefix string) ([]string, error) {
@@ -285,7 +286,7 @@ func (client *Client) fetchData(ctx context.Context, queryResult *prompb.QueryRe
 				// We simply ignore errors here as it is better to return "some" data
 				// than nothing.
 				ts, err := client.TargetToTimeseries(ctx, target, fromStr, untilStr, graphitePrefix)
-					if err != nil {
+				if err != nil {
 					client.logger.Warn("Error fetching and parsing target datapoints", "target", target, "err", err)
 				} else {
 					client.logger.Debug("reading responses")

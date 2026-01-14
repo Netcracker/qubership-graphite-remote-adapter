@@ -1,4 +1,4 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -136,8 +136,16 @@ func (t *TCPServer) Run(wg *sync.WaitGroup) (err error) {
 
 // Close shuts down the TCP Server
 func (t *TCPServer) Close() (err error) {
-	t.writer.Close()
-	t.reader.Close()
+	err = t.writer.Close()
+	if err != nil {
+		t.logger.Error("failed to close pipe writer", "err", err.Error())
+		return err
+	}
+	err = t.reader.Close()
+	if err != nil {
+		t.logger.Error("failed to close pipe reader", "err", err.Error())
+		return err
+	}
 	return t.server.Close()
 }
 
@@ -179,7 +187,12 @@ func TestCompression(t *testing.T) {
 	file, err := os.Open("./testdata/req.sz")
 	assert.NoError(t, err)
 
-	defer file.Close()
+	defer func() {
+		errClose := file.Close()
+		if errClose != nil {
+			t.Logf("failed to close file: %v", errClose)
+		}
+	}()
 	stats, statsErr := file.Stat()
 	assert.NoError(t, statsErr)
 	var size = stats.Size()
@@ -226,7 +239,7 @@ func TestCompression(t *testing.T) {
 
 	assert.NotEmpty(t, b)
 	assert.True(t, len(inputBuffer) == len(b))
-	assert.True(t, bytes.Compare(inputBuffer, b) == 0)
+	assert.True(t, bytes.Equal(inputBuffer, b))
 }
 
 func TestShortSizeCompression(t *testing.T) {
@@ -267,7 +280,12 @@ func TestShortSizeCompression(t *testing.T) {
 	file, err := os.Open("./testdata/short_req.sz")
 	assert.NoError(t, err)
 
-	defer file.Close()
+	defer func() {
+		errClose := file.Close()
+		if errClose != nil {
+			logger.Error("failed to close file", "err", errClose)
+		}
+	}()
 	stats, statsErr := file.Stat()
 	assert.NoError(t, statsErr)
 	var size = stats.Size()
@@ -314,7 +332,7 @@ func TestShortSizeCompression(t *testing.T) {
 
 	assert.NotEmpty(t, b)
 	assert.True(t, len(inputBuffer) == len(b))
-	assert.True(t, bytes.Compare(inputBuffer, b) == 0)
+	assert.True(t, bytes.Equal(inputBuffer, b))
 }
 
 func TestWithoutCompression(t *testing.T) {
@@ -356,7 +374,12 @@ func TestWithoutCompression(t *testing.T) {
 	file, err := os.Open("./testdata/req.sz")
 	assert.NoError(t, err)
 
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			logger.Error("failed to close file", "err", err)
+		}
+	}()
 	stats, statsErr := file.Stat()
 	assert.NoError(t, statsErr)
 	var size = stats.Size()
@@ -403,5 +426,5 @@ func TestWithoutCompression(t *testing.T) {
 
 	assert.NotEmpty(t, b)
 	assert.True(t, len(inputBuffer) == len(b))
-	assert.True(t, bytes.Compare(inputBuffer, b) == 0)
+	assert.True(t, bytes.Equal(inputBuffer, b))
 }

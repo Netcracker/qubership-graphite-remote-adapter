@@ -54,6 +54,16 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
+            type=sha,prefix=git-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+          flavor: |
+            latest=${{ github.ref == 'refs/heads/main' }}
+          labels: |
+            org.opencontainers.image.description=${{ matrix.component.description }}
+          annotations: |
+            org.opencontainers.image.description=${{ matrix.component.description }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -76,3 +86,7 @@ jobs:
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_BRANCH=${{ github.ref_name }}
+            GIT_REVISION=${{ github.sha }}
+

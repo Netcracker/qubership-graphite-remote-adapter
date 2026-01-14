@@ -1,6 +1,6 @@
 // Copyright 2015 The Prometheus Authors
 // Copyright 2017 Corentin Chary <corentin.chary@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import (
 	"sync"
 	"time"
 
+	"log/slog"
+
 	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/paths"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
-	"log/slog"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

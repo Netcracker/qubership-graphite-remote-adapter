@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import (
 	"net/http"
 	"sync"
 
+	"log/slog"
+
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
@@ -29,7 +31,6 @@ import (
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/template"
 	"github.com/davecgh/go-spew/spew"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
-	"log/slog"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"context"
 	"log/slog"
-	"golang.org/x/net/context"
+
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -53,7 +54,9 @@ func FetchURL(ctx context.Context, logger *slog.Logger, u *url.URL) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	defer hresp.Body.Close()
+	if err := hresp.Body.Close(); err != nil {
+		return nil, err
+	}
 
 	body, err := io.ReadAll(hresp.Body)
 	logger.Debug("Reading HTTP response body", "len(body)", len(body), "err", err)

@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import (
 	"testing"
 
 	"log/slog"
+
+	"context"
+
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
-	"golang.org/x/net/context"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 )
