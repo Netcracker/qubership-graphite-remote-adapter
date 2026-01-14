@@ -72,10 +72,10 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 
 	samples, bufSize := prepareSamples(n)
 
-	lvl := &promslog.AllowedLevel{}
+	lvl := promslog.NewLevel()
 	err = lvl.Set("error")
 	assert.Empty(b, err)
-	logger := promslog.New(&promslog.Config{Level: lvl, Format: &promslog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: lvl, Format: promslog.NewFormat()})
 	cfg := &config.DefaultConfig
 	cfg.Graphite.Write.CarbonAddress = "127.0.0.1"
 	client := NewClient(cfg, logger)

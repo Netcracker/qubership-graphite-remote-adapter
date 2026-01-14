@@ -85,7 +85,7 @@ func (client *Client) prepareWrite(samples model.Samples, reqBufLen int, r *http
 	bytesBuffers := []*bytes.Buffer{currentBuf}
 	for _, s := range samples {
 		datapoints, err := gpaths.ToDatapoints(s, client.format, graphitePrefix, client.cfg.Write.Rules, client.cfg.Write.TemplateData)
-		//_ = level.Debug(c.logger).Log("sample", s.String())
+		//client.logger.Debug("sample", "sample", s.String())
 		if err != nil {
 			client.logger.Debug("sample parse error", "sample", s, "err", err)
 			client.ignoredSamples.Inc()
@@ -97,7 +97,7 @@ func (client *Client) prepareWrite(samples model.Samples, reqBufLen int, r *http
 				bytesBuffers = append(bytesBuffers, currentBuf)
 			}
 			currentBuf.Write(str)
-			//level.Debug(c.logger).Log("line", str, "msg", "Sending")
+			//client.logger.Debug("Sending", "line", str)
 		}
 	}
 	return bytesBuffers, nil

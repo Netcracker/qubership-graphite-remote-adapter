@@ -142,10 +142,10 @@ func (t *TCPServer) Close() (err error) {
 }
 
 func TestCompression(t *testing.T) {
-	debugLevel := &promslog.AllowedLevel{}
+	debugLevel := promslog.NewLevel()
 	err := debugLevel.Set("debug")
 	assert.NoError(t, err)
-	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: &promslog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: promslog.NewFormat()})
 
 	cfg := config.DefaultConfig
 	cfg.Web.ListenAddress = "127.0.0.1:9201"
@@ -230,10 +230,10 @@ func TestCompression(t *testing.T) {
 }
 
 func TestShortSizeCompression(t *testing.T) {
-	debugLevel := &promslog.AllowedLevel{}
+	debugLevel := promslog.NewLevel()
 	err := debugLevel.Set("debug")
 	assert.NoError(t, err)
-	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: &promslog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: promslog.NewFormat()})
 
 	cfg := config.DefaultConfig
 	cfg.Web.ListenAddress = "127.0.0.1:9202"
@@ -318,10 +318,10 @@ func TestShortSizeCompression(t *testing.T) {
 }
 
 func TestWithoutCompression(t *testing.T) {
-	debugLevel := &promslog.AllowedLevel{}
+	debugLevel := promslog.NewLevel()
 	err := debugLevel.Set("debug")
 	assert.NoError(t, err)
-	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: &promslog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: promslog.NewFormat()})
 
 	cfg := config.DefaultConfig
 	cfg.Web.ListenAddress = "127.0.0.1:9203"

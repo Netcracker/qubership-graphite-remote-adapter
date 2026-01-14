@@ -23,12 +23,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"log/slog"
+
 	"dario.cat/mergo"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/web"
 	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
-	"log/slog"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
@@ -67,9 +68,9 @@ func reload(cliCfg *config.Config, logger *slog.Logger) (*config.Config, error) 
 func main() {
 	cliCfg := config.ParseCommandLine()
 
-	logger := promslog.New(&promslog.Config{Level: &cliCfg.LogLevel, Format: &promslog.AllowedFormat{}})
-	logger.Info("Starting graphite-remote-adapter", "version", version.Info())
-	logger.Info("build_context", "build_context", version.BuildContext())
+	logger := promslog.New(&promslog.Config{Level: &cliCfg.LogLevel, Format: promslog.NewFormat()})
+
+	logger.Info("Starting graphite-remote-adapter", "version", version.Info(), "build_context", version.BuildContext())
 
 	undo, err := maxprocs.Set()
 	defer undo()
@@ -84,6 +85,7 @@ func main() {
 		logger.Error("Error first loading config", "err", err)
 		return
 	}
+
 	webHandler := web.New(logger.With("component", "web"), cfg)
 	if err = webHandler.ApplyConfig(cfg); err != nil {
 		logger.Error("Error applying webHandler config", "err", err)

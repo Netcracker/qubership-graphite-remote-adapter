@@ -30,7 +30,7 @@ import (
 
 // ParseCommandLine parse flags and args from cli.
 func ParseCommandLine() *Config {
-	cfg := &Config{}
+	cfg := DefaultConfig
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "The Graphite remote adapter")
 
@@ -79,5 +79,5 @@ func ParseCommandLine() *Config {
 		a.Usage(os.Args[1:])
 		os.Exit(2)
 	}
-	return cfg
+	return &cfg
 }

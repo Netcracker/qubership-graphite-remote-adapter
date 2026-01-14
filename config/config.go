@@ -22,9 +22,10 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils"
-	"log/slog"
 	"github.com/prometheus/common/promslog"
 	"gopkg.in/yaml.v3"
 )
@@ -60,6 +61,7 @@ func LoadFile(logger *slog.Logger, filename string) (*Config, error) {
 
 // DefaultConfig is the default top-level configuration.
 var DefaultConfig = Config{
+	LogLevel: *promslog.NewLevel(),
 	Web: webOptions{
 		ListenAddress: "0.0.0.0:9201",
 		TelemetryPath: "/metrics",
@@ -78,7 +80,7 @@ var DefaultConfig = Config{
 // Config is the top-level configuration.
 type Config struct {
 	ConfigFile string
-	LogLevel   promslog.AllowedLevel
+	LogLevel   promslog.Level
 	Web        webOptions      `yaml:"web,omitempty" json:"web,omitempty"`
 	Read       readOptions     `yaml:"read,omitempty" json:"read,omitempty"`
 	Write      writeOptions    `yaml:"write,omitempty" json:"write,omitempty"`
@@ -96,7 +98,24 @@ func (c Config) String() string {
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
 	}
-	str := strings.ReplaceAll(string(b), "loglevel: {}", "loglevel: "+c.LogLevel.String())
+	// Safely replace the placeholder for loglevel with the string
+	// representation. Calling `c.LogLevel.String()` may panic when the
+	// underlying state is not initialized, so call it in a recover block
+	// and skip replacement on failure.
+	s := string(b)
+	levelStr := ""
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				levelStr = ""
+			}
+		}()
+		levelStr = c.LogLevel.String()
+	}()
+	if levelStr != "" {
+		s = strings.ReplaceAll(s, "loglevel: {}", "loglevel: "+levelStr)
+	}
+	str := s
 	return str
 }
 

@@ -20,12 +20,15 @@ import (
 	"testing"
 	"time"
 
-	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"io"
 	"log/slog"
+
+	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
+	"github.com/prometheus/common/promslog"
 )
 
 var expectedConf = &Config{
+	LogLevel: *promslog.NewLevel(),
 	Web: webOptions{
 		ListenAddress: "1.2.3.4:666",
 		TelemetryPath: "/coolMetrics",
