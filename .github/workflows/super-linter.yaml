@@ -61,32 +61,12 @@ jobs:
         # Full git history is needed to get a proper list of changed files within `super-linter`
         fetch-depth: 0
         persist-credentials: false
-
-    - name: "Get Go version"
-      id: go-version
-      shell: bash
-      run: |
-        # extract Go version from go.mod (e.g. "1.20") without requiring Go to be installed
-        VERSION=$(grep -E '^go[[:space:]]+[0-9]+' go.mod | awk '{print $2}')
-        echo "version=${VERSION:-}" >> $GITHUB_OUTPUT
-
-    - name: Set up Go
-      uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
-      with:
-        go-version: "${{ steps.go-version.outputs.version }}"
-
-    - name: Install C compiler and headers
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc libc6-dev pkg-config
-
     - name: "Get the common linters configuration"
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       id: download
       with:
         name: linter-config
         path: /tmp/linter-config
-
     - name: "Apply the common linters configuration"
       if: ${{ steps.download.outputs.download-path != '' }}
       run: |
