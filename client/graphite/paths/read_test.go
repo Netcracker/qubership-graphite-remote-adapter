@@ -45,3 +45,20 @@ func TestMetricLabelsFromSpecialPath(t *testing.T) {
 	actualLabels, _ := MetricLabelsFromPath(path, prefix)
 	require.Equal(t, expectedLabels, actualLabels)
 }
+
+func TestMetricLabelsFromTags(t *testing.T) {
+	tags := map[string]string{
+		"name":   "prefix.metric",
+		"owner":  "team-X",
+		"label1": "value1",
+	}
+	prefix := "prefix."
+	expectedLabels := []prompb.Label{
+		{Name: "label1", Value: "value1"},
+		{Name: model.MetricNameLabel, Value: "metric"},
+		{Name: "owner", Value: "team-X"},
+	}
+	actualLabels, err := MetricLabelsFromTags(tags, prefix)
+	require.NoError(t, err)
+	require.Equal(t, expectedLabels, actualLabels)
+}
