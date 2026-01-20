@@ -54,7 +54,11 @@ func FetchURL(ctx context.Context, logger log.Logger, u *url.URL) ([]byte, error
 	if err != nil {
 		return nil, err
 	}
-	defer hresp.Body.Close()
+	defer func() {
+		if err := hresp.Body.Close(); err != nil {
+			_ = level.Error(logger).Log("err", err, "msg", "failed to close response body")
+		}
+	}()
 
 	body, err := io.ReadAll(hresp.Body)
 	_ = level.Debug(logger).Log("len(body)", len(body), "err", err, "msg", "Reading HTTP response body")

@@ -24,7 +24,7 @@ import (
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/pkg/errors"
-	promlogflag "github.com/prometheus/common/promlog/flag"
+	promslogflag "github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/common/version"
 )
 
@@ -67,7 +67,7 @@ func ParseCommandLine() *Config {
 		BoolVar(&cfg.Read.IgnoreError)
 
 	// Add logLevel flag
-	a.Flag(promlogflag.LevelFlagName, promlogflag.LevelFlagHelp).
+	a.Flag(promslogflag.LevelFlagName, promslogflag.LevelFlagHelp).
 		Default("info").SetValue(&cfg.LogLevel)
 
 	// Add graphite flag
