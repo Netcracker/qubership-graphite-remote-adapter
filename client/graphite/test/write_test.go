@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/lz4"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/web"
@@ -161,6 +162,8 @@ func TestCompression(t *testing.T) {
 			_ = level.Error(logger).Log("err", err)
 		}
 	}()
+	// Give the server time to start
+	time.Sleep(100 * time.Millisecond)
 
 	var srv Server
 	srv, err = NewServer("tcp", cfg.Graphite.Write.CarbonAddress, cfg.Graphite.Write.CompressType, logger)
@@ -201,7 +204,14 @@ func TestCompression(t *testing.T) {
 		defer wg.Done()
 		client := &http.Client{}
 		var res *http.Response
-		res, err = client.Do(r)
+		// Retry up to 10 times with 100ms delay
+		for i := 0; i < 10; i++ {
+			res, err = client.Do(r)
+			if err == nil {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
 		assert.NoError(t, err)
 		defer func(Body io.ReadCloser) {
 			respErr := Body.Close()
@@ -289,7 +299,14 @@ func TestShortSizeCompression(t *testing.T) {
 		defer wg.Done()
 		client := &http.Client{}
 		var res *http.Response
-		res, err = client.Do(r)
+		// Retry up to 10 times with 100ms delay
+		for i := 0; i < 10; i++ {
+			res, err = client.Do(r)
+			if err == nil {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
 		assert.NoError(t, err)
 		defer func(Body io.ReadCloser) {
 			respErr := Body.Close()
@@ -378,7 +395,14 @@ func TestWithoutCompression(t *testing.T) {
 		defer wg.Done()
 		client := &http.Client{}
 		var res *http.Response
-		res, err = client.Do(r)
+		// Retry up to 10 times with 100ms delay
+		for i := 0; i < 10; i++ {
+			res, err = client.Do(r)
+			if err == nil {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
 		assert.NoError(t, err)
 		defer func(Body io.ReadCloser) {
 			respErr := Body.Close()
