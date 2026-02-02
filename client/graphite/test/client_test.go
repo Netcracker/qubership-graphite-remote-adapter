@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ import (
 	"reflect"
 	"testing"
 
+	"io"
+	"log/slog"
+
 	graphiteClient "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 	graphiteCfg "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
-	"github.com/go-kit/log"
 )
 
 var (
@@ -35,7 +37,7 @@ var (
 				URL: "http://testHost:6666",
 			},
 		},
-		log.NewNopLogger())
+		slog.New(slog.NewTextHandler(io.Discard, nil)))
 )
 
 func TestGetGraphitePrefix(t *testing.T) {

@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ func replace(input interface{}, from, to string) (string, error) {
 	if input == nil {
 		return "", errors.New("input does not exist, cannot replace")
 	}
-	return strings.Replace(input.(string), from, to, -1), nil
+	return strings.ReplaceAll(input.(string), from, to), nil
 }
 
 func split(input interface{}, delimiter string) ([]string, error) {

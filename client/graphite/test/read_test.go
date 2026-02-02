@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-kit/log"
+	"log/slog"
+
+	"context"
+
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
-	"golang.org/x/net/context"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 )
@@ -42,7 +44,7 @@ var (
 	}
 )
 
-func testFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func testFetchExpandURL(ctx context.Context, l *slog.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/metrics/expand?format=json&leavesOnly=1&query=prometheus-prefix.test.%2A%2A" {
 		body.WriteString("{\"results\": [\"prometheus-prefix.test.owner.team-X\", \"prometheus-prefix.test.owner.team-Y\"]}")
@@ -50,7 +52,7 @@ func testFetchExpandURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, 
 	return body.Bytes(), nil
 }
 
-func testFetchRenderURL(ctx context.Context, l log.Logger, u *url.URL) ([]byte, error) {
+func testFetchRenderURL(ctx context.Context, l *slog.Logger, u *url.URL) ([]byte, error) {
 	var body bytes.Buffer
 	if u.String() == "http://testHost:6666/render/?format=json&from=0&target=prometheus-prefix.test.owner.team-X&until=300" {
 		body.WriteString("[{\"target\": \"prometheus-prefix.test.owner.team-X\", \"datapoints\": [[18,0], [42,300]]}]")
