@@ -40,7 +40,7 @@ COPY web/ web/
 
 # Install LZ4 libraries to build
 RUN apk add --no-cache \
-        openssl=3.5.4-r0 \
+        openssl=3.5.5-r0 \
         make=4.4.1-r3 \
         build-base=0.5-r3 \
         lz4-dev=1.10.0-r0 \
