@@ -54,7 +54,7 @@ RUN CGO_ENABLED=1 CC=gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go
     ./
 
 # Use alpine tiny images as a base
-FROM alpine:3.23.2
+FROM alpine:3.23.3
 
 ENV USER_UID=2001 \
     USER_NAME=appuser \
