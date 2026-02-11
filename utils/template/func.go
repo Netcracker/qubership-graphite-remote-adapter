@@ -29,7 +29,7 @@ func replace(input interface{}, from, to string) (string, error) {
 	if input == nil {
 		return "", errors.New("input does not exist, cannot replace")
 	}
-	return strings.Replace(input.(string), from, to, -1), nil
+	return strings.ReplaceAll(input.(string), from, to), nil
 }
 
 func split(input interface{}, delimiter string) ([]string, error) {
