@@ -183,7 +183,7 @@ func (client *Client) Write(samples model.Samples, reqBufLen int, r *http.Reques
 		}
 	}
 
-	return []byte("Done."), err
+	return []byte("Done."), nil
 }
 
 func (client *Client) compressLZ4(pipeWriter *io.PipeWriter, buf *bytes.Buffer) (written int64, err error) {
@@ -222,5 +222,4 @@ func (client *Client) closePipeWrite(pipeWriter *io.PipeWriter) {
 	if err != nil {
 		_ = level.Error(client.logger).Log("err", err.Error(), "msg", "failed to close pipe writer")
 	}
-	return
 }

@@ -61,7 +61,7 @@ func MetricLabelsFromPath(path string, prefix string) ([]prompb.Label, error) {
 	nodes := strings.Split(cleanedPath, ".")
 	labels = append(labels, prompb.Label{Name: model.MetricNameLabel, Value: nodes[0]})
 	if len(nodes[1:])%2 != 0 {
-		err := fmt.Errorf("Unable to parse labels from path: odd number of nodes in path")
+		err := fmt.Errorf("unable to parse labels from path: odd number of nodes in path")
 		return nil, err
 	}
 	for i := 1; i < len(nodes); i += 2 {

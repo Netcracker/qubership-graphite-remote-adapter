@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
+	"github.com/go-kit/log"
 	"github.com/prometheus/common/model"
-	"github.com/prometheus/common/promlog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,10 +72,7 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 
 	samples, bufSize := prepareSamples(n)
 
-	lvl := &promlog.AllowedLevel{}
-	err = lvl.Set("error")
-	assert.Empty(b, err)
-	logger := promlog.New(&promlog.Config{Level: lvl, Format: &promlog.AllowedFormat{}})
+	logger := log.NewNopLogger()
 	cfg := &config.DefaultConfig
 	cfg.Graphite.Write.CarbonAddress = "127.0.0.1"
 	client := NewClient(cfg, logger)
@@ -90,10 +87,10 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 
 func prepareSamples(n int) (samples model.Samples, bufSize int) {
 	for i := 0; i < n; i++ {
-		metric := model.Metric{model.MetricNameLabel: lName[rand.Intn(20)], "cluster": "cluster-kubernetes", "endpoint": "https-metrics",
+		metric := model.Metric{model.MetricNameLabel: lName[rand.Intn(len(lName))], "cluster": "cluster-kubernetes", "endpoint": "https-metrics",
 			"id":    "/systemd/system.slice/kubepods-burstable-podb270ecd5_78cc_4232_9187_1dd035045cb1.slice:cri-containerd:169763650b87dfa9ebb90ee4dc704c57eb38abdd308a930cda1f45aab3bb7e6c",
-			"image": "registry:17001/k8s.gcr.io/pause:3.2", "instance": "169763650b87dfa9ebb90ee4dc704c57eb38abdd308a930cda1f45aab3bb7e6c", "namespace": namespaces[rand.Intn(20)],
-			"pod": namespaces[rand.Intn(20)], "prometheus": "monitoring/k8s", "prometheus_replica": "prometheus-k8s-0", "service": "kubelet", "team": "test_team"}
+			"image": "registry:17001/k8s.gcr.io/pause:3.2", "instance": "169763650b87dfa9ebb90ee4dc704c57eb38abdd308a930cda1f45aab3bb7e6c", "namespace": namespaces[rand.Intn(len(namespaces))],
+			"pod": namespaces[rand.Intn(len(namespaces))], "prometheus": "monitoring/k8s", "prometheus_replica": "prometheus-k8s-0", "service": "kubelet", "team": "test_team"}
 		for key, value := range metric {
 			bufSize += len(key)
 			bufSize += len(value)

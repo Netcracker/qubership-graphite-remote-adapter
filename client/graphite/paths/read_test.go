@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,5 +43,22 @@ func TestMetricLabelsFromSpecialPath(t *testing.T) {
 		{Name: "interface", Value: "Hu0/0/1/3.99"},
 	}
 	actualLabels, _ := MetricLabelsFromPath(path, prefix)
+	require.Equal(t, expectedLabels, actualLabels)
+}
+
+func TestMetricLabelsFromTags(t *testing.T) {
+	tags := map[string]string{
+		"name":   "prefix.metric",
+		"owner":  "team-X",
+		"label1": "value1",
+	}
+	prefix := "prefix."
+	expectedLabels := []prompb.Label{
+		{Name: "label1", Value: "value1"},
+		{Name: model.MetricNameLabel, Value: "metric"},
+		{Name: "owner", Value: "team-X"},
+	}
+	actualLabels, err := MetricLabelsFromTags(tags, prefix)
+	require.NoError(t, err)
 	require.Equal(t, expectedLabels, actualLabels)
 }
