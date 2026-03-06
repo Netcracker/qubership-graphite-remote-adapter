@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.0-alpine3.22 AS builder
 
 ARG BUILDPLATFORM
 ARG TARGETOS
@@ -43,7 +43,7 @@ COPY VERSION VERSION
 
 # Install LZ4 libraries to build
 RUN apk add --no-cache \
-        openssl=3.5.4-r0 \
+        openssl=3.5.5-r0 \
         make=4.4.1-r3 \
         build-base=0.5-r3 \
         lz4-dev=1.10.0-r0 \
@@ -61,7 +61,7 @@ RUN CGO_ENABLED=1 CC=gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go
     ./
 
 # Use alpine tiny images as a base
-FROM alpine:3.23.2
+FROM alpine:3.23.3
 
 ENV USER_UID=2001 \
     USER_NAME=appuser \
