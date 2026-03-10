@@ -1,5 +1,5 @@
 // Copyright 2017 The Prometheus Authors
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,30 +23,30 @@ import (
 	"os/signal"
 	"syscall"
 
+	"log/slog"
+
 	"dario.cat/mergo"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/web"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promslog"
 	"github.com/prometheus/common/version"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
-func reload(cliCfg *config.Config, logger log.Logger) (*config.Config, error) {
+func reload(cliCfg *config.Config, logger *slog.Logger) (*config.Config, error) {
 	cfg := &config.DefaultConfig
 	// Parse config file if needed
 	if cliCfg.ConfigFile != "" {
 		fileCfg, err := config.LoadFile(logger, cliCfg.ConfigFile)
 		if err != nil {
-			_ = level.Error(logger).Log("err", err, "msg", "Error loading config file")
+			logger.Error("Error loading config file", "err", err)
 			return nil, err
 		}
 		cfg = fileCfg
 	}
 	// Merge overwriting cliCfg into cfg
 	if err := mergo.Merge(cfg, cliCfg, mergo.WithOverride); err != nil {
-		_ = level.Error(logger).Log("err", err, "msg", "Error merging config file with flags")
+		logger.Error("Error merging config file with flags", "err", err)
 		return nil, err
 	}
 
@@ -68,27 +68,27 @@ func reload(cliCfg *config.Config, logger log.Logger) (*config.Config, error) {
 func main() {
 	cliCfg := config.ParseCommandLine()
 
-	logger := promlog.New(&promlog.Config{Level: &cliCfg.LogLevel, Format: &promlog.AllowedFormat{}})
-	_ = level.Info(logger).Log("msg", "Starting graphite-remote-adapter", "version", version.Info())
-	_ = level.Info(logger).Log("build_context", version.BuildContext())
+	logger := promslog.New(&promslog.Config{Level: &cliCfg.LogLevel, Format: promslog.NewFormat()})
+
+	logger.Info("Starting graphite-remote-adapter", "version", version.Info(), "build_context", version.BuildContext())
 
 	undo, err := maxprocs.Set()
 	defer undo()
 	if err != nil {
-		_ = level.Error(logger).Log("err", err, "msg", "failed to set GOMAXPROCS")
+		logger.Error("failed to set GOMAXPROCS", "err", err)
 		return
 	}
 
 	// Load the config once.
 	cfg, err := reload(cliCfg, logger)
 	if err != nil {
-		_ = level.Error(logger).Log("err", err, "msg", "Error first loading config")
+		logger.Error("Error first loading config", "err", err)
 		return
 	}
 
-	webHandler := web.New(log.With(logger, "component", "web"), cfg)
+	webHandler := web.New(logger.With("component", "web"), cfg)
 	if err = webHandler.ApplyConfig(cfg); err != nil {
-		_ = level.Error(logger).Log("err", err, "msg", "Error applying webHandler config")
+		logger.Error("Error applying webHandler config", "err", err)
 		return
 	}
 
@@ -101,24 +101,24 @@ func main() {
 			case <-hup:
 				cfg, err = reload(cliCfg, logger)
 				if err != nil {
-					_ = level.Error(logger).Log("err", err, "msg", "Error reloading config")
+					logger.Error("Error reloading config", "err", err)
 					continue
 				}
 				if err = webHandler.ApplyConfig(cfg); err != nil {
-					_ = level.Error(logger).Log("err", err, "msg", "Error applying webHandler config")
+					logger.Error("Error applying webHandler config", "err", err)
 					continue
 				}
-				_ = level.Info(logger).Log("msg", "Reloaded config file")
+				logger.Info("Reloaded config file")
 			case rc := <-webHandler.Reload():
 				cfg, err = reload(cliCfg, logger)
 				if err != nil {
-					_ = level.Error(logger).Log("err", err, "msg", "Error reloading config")
+					logger.Error("Error reloading config", "err", err)
 					rc <- err
 				} else if err = webHandler.ApplyConfig(cfg); err != nil {
-					_ = level.Error(logger).Log("err", err, "msg", "Error applying webHandler config")
+					logger.Error("Error applying webHandler config", "err", err)
 					rc <- err
 				} else {
-					_ = level.Info(logger).Log("msg", "Reloaded config file")
+					logger.Info("Reloaded config file")
 					rc <- nil
 				}
 			}
@@ -127,7 +127,7 @@ func main() {
 
 	err = webHandler.Run()
 	if err != nil {
-		_ = level.Warn(logger).Log("err", err)
+		logger.Warn("Run error", "err", err)
 	}
-	_ = level.Info(logger).Log("msg", "See you next time!")
+	logger.Info("See you next time!")
 }

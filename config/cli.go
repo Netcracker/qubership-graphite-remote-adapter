@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import (
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/pkg/errors"
-	promlogflag "github.com/prometheus/common/promlog/flag"
+	promslogflag "github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/common/version"
 )
 
 // ParseCommandLine parse flags and args from cli.
 func ParseCommandLine() *Config {
-	cfg := &Config{}
+	cfg := DefaultConfig
 
 	a := kingpin.New(filepath.Base(os.Args[0]), "The Graphite remote adapter")
 
@@ -67,7 +67,7 @@ func ParseCommandLine() *Config {
 		BoolVar(&cfg.Read.IgnoreError)
 
 	// Add logLevel flag
-	a.Flag(promlogflag.LevelFlagName, promlogflag.LevelFlagHelp).
+	a.Flag(promslogflag.LevelFlagName, promslogflag.LevelFlagHelp).
 		Default("info").SetValue(&cfg.LogLevel)
 
 	// Add graphite flag
@@ -79,5 +79,5 @@ func ParseCommandLine() *Config {
 		a.Usage(os.Args[1:])
 		os.Exit(2)
 	}
-	return cfg
+	return &cfg
 }

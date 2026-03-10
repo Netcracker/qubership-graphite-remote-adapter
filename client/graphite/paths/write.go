@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -148,8 +148,9 @@ func defaultPath(m model.Metric, format Format, prefix string) []byte {
 
 		k := []byte(l)
 		v := string(m[l])
-		if format == FormatCarbonOpenMetrics {
-			// https://github.com/RichiH/OpenMetrics/blob/master/metric_exposition_format.md
+		switch format {
+		case FormatCarbonOpenMetrics:
+			// See https://github.com/RichiH/OpenMetrics/blob/master/metric_exposition_format.md
 			if !first {
 				lbuffer.WriteByte(',')
 			}
@@ -159,14 +160,14 @@ func defaultPath(m model.Metric, format Format, prefix string) []byte {
 			val := graphitetmpl.Escape(v)
 			lbuffer.Write(val)
 			lbuffer.WriteByte('"')
-		} else if format == FormatCarbonTags {
+		case FormatCarbonTags:
 			// See http://graphite.readthedocs.io/en/latest/tags.html
 			lbuffer.WriteByte(';')
 			lbuffer.Write(k)
 			lbuffer.WriteByte('=')
 			val := graphitetmpl.EscapeTagged(v)
 			lbuffer.Write(val)
-		} else {
+		default:
 			// For each label, in order, add ".<label>.<value>".
 			// Since we use '.' instead of '=' to separate label and values
 			// it means that we can't have an '.' in the metric name. Fortunately

@@ -1,6 +1,6 @@
 // Copyright 2015 The Prometheus Authors
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import (
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	gpaths "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/paths"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/lz4"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/common/model"
 )
 
@@ -43,17 +42,14 @@ func (client *Client) connectToCarbon() (net.Conn, error) {
 			// Last reconnect is not too long ago, re-use the connection.
 			return client.carbonCon, nil
 		}
-		_ = level.Debug(client.logger).Log(
-			"last", client.carbonLastReconnectTime,
-			"msg", "Reinitializing the connection to carbon")
+		client.logger.Debug("Reinitializing the connection to carbon", "last", client.carbonLastReconnectTime)
 		client.disconnectFromCarbon()
 	}
 
-	_ = level.Debug(client.logger).Log(
+	client.logger.Debug("Connecting to carbon",
 		"transport", client.cfg.Write.CarbonTransport,
 		"address", client.cfg.Write.CarbonAddress,
-		"timeout", client.writeTimeout,
-		"msg", "Connecting to carbon")
+		"timeout", client.writeTimeout)
 	conn, err := net.DialTimeout(client.cfg.Write.CarbonTransport, client.cfg.Write.CarbonAddress, client.writeTimeout)
 	if err != nil {
 		client.carbonCon = nil
@@ -73,7 +69,7 @@ func (client *Client) disconnectFromCarbon() {
 }
 
 func (client *Client) prepareWrite(samples model.Samples, reqBufLen int, r *http.Request) ([]*bytes.Buffer, error) {
-	_ = level.Debug(client.logger).Log("num_samples", len(samples), "storage", client.Name(), "msg", "Remote write")
+	client.logger.Debug("Remote write", "num_samples", len(samples), "storage", client.Name())
 
 	graphitePrefix := client.cfg.StoragePrefixFromRequest(r)
 
@@ -89,9 +85,9 @@ func (client *Client) prepareWrite(samples model.Samples, reqBufLen int, r *http
 	bytesBuffers := []*bytes.Buffer{currentBuf}
 	for _, s := range samples {
 		datapoints, err := gpaths.ToDatapoints(s, client.format, graphitePrefix, client.cfg.Write.Rules, client.cfg.Write.TemplateData)
-		//_ = level.Debug(c.logger).Log("sample", s.String())
+		//client.logger.Debug("sample", "sample", s.String())
 		if err != nil {
-			_ = level.Debug(client.logger).Log("sample", s, "err", err)
+			client.logger.Debug("sample parse error", "sample", s, "err", err)
 			client.ignoredSamples.Inc()
 			continue
 		}
@@ -101,7 +97,7 @@ func (client *Client) prepareWrite(samples model.Samples, reqBufLen int, r *http
 				bytesBuffers = append(bytesBuffers, currentBuf)
 			}
 			currentBuf.Write(str)
-			//level.Debug(c.logger).Log("line", str, "msg", "Sending")
+			//client.logger.Debug("Sending", "line", str)
 		}
 	}
 	return bytesBuffers, nil
@@ -165,21 +161,21 @@ func (client *Client) Write(samples model.Samples, reqBufLen int, r *http.Reques
 		written, err = io.Copy(conn, pipeReader)
 		if err != nil {
 			if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) {
-				_ = level.Error(client.logger).Log("msg", "Pipe is broken. Connection closed")
+				client.logger.Error("Pipe is broken. Connection closed")
 			}
 			err = pipeReader.Close()
 			if err != nil {
-				_ = level.Error(client.logger).Log("err", err.Error(), "msg", "failed to close pipe reader")
+				client.logger.Error("failed to close pipe reader", "err", err.Error())
 			}
 			client.disconnectFromCarbon()
 			return nil, err
 		}
 
-		_ = level.Debug(client.logger).Log("msg", conn.LocalAddr().String()+"->"+conn.RemoteAddr().String(), "sent", strconv.FormatInt(written, 10))
+		client.logger.Debug("sent", "conn", conn.LocalAddr().String()+"->"+conn.RemoteAddr().String(), "bytes", strconv.FormatInt(written, 10))
 
 		err = pipeReader.Close()
 		if err != nil {
-			_ = level.Error(client.logger).Log("err", err.Error(), "msg", "failed to close pipe reader")
+			client.logger.Error("failed to close pipe reader", "err", err.Error())
 		}
 	}
 
@@ -190,17 +186,17 @@ func (client *Client) compressLZ4(pipeWriter *io.PipeWriter, buf *bytes.Buffer) 
 	var lz4Writer *lz4.Writer
 	lz4Writer, err = lz4.NewWriter(pipeWriter, client.logger, client.cfg.Write.CompressLZ4Preferences)
 	if err != nil {
-		_ = level.Error(client.logger).Log("err", err)
+		client.logger.Error("error compressing data", "err", err)
 		return
 	}
 	defer func(lz4Writer *lz4.Writer) {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic occurred: %v", r)
-			_ = level.Error(client.logger).Log("err", err.Error())
+			client.logger.Error("panic occurred", "err", err)
 		}
 		errClose := lz4Writer.Close()
 		if errClose != nil {
-			_ = level.Error(client.logger).Log("err", errClose.Error(), "msg", "failed to close pipe writer")
+			client.logger.Error("failed to close pipe writer", "err", errClose.Error())
 			if err == nil {
 				err = errClose
 			}
@@ -211,7 +207,7 @@ func (client *Client) compressLZ4(pipeWriter *io.PipeWriter, buf *bytes.Buffer) 
 	written, err = io.Copy(lz4Writer, bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		if !errors.Is(err, io.ErrShortWrite) {
-			_ = level.Error(client.logger).Log("err", err)
+			client.logger.Error("error writing compressed data", "err", err)
 		}
 	}
 	return
@@ -220,7 +216,6 @@ func (client *Client) compressLZ4(pipeWriter *io.PipeWriter, buf *bytes.Buffer) 
 func (client *Client) closePipeWrite(pipeWriter *io.PipeWriter) {
 	err := pipeWriter.Close()
 	if err != nil {
-		_ = level.Error(client.logger).Log("err", err.Error(), "msg", "failed to close pipe writer")
+		client.logger.Error("failed to close pipe writer", "err", err.Error())
 	}
-	return
 }

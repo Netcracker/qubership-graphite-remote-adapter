@@ -1,4 +1,4 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
 	"github.com/prometheus/common/model"
-	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -72,10 +72,10 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 
 	samples, bufSize := prepareSamples(n)
 
-	lvl := &promlog.AllowedLevel{}
+	lvl := promslog.NewLevel()
 	err = lvl.Set("error")
 	assert.Empty(b, err)
-	logger := promlog.New(&promlog.Config{Level: lvl, Format: &promlog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: lvl, Format: promslog.NewFormat()})
 	cfg := &config.DefaultConfig
 	cfg.Graphite.Write.CarbonAddress = "127.0.0.1"
 	client := NewClient(cfg, logger)

@@ -1,5 +1,5 @@
 // Copyright 2020 Charles-Antoine Mathieu authored and melchiormoulin committed
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,22 +22,22 @@ func TestTruncateString(t *testing.T) {
 	var result string
 
 	result = TruncateString("test", -1)
-	if "" != result {
+	if result != "" {
 		t.Errorf("Expected %s, got %s", "", result)
 	}
 
 	result = TruncateString("test", 10)
-	if "test" != result {
+	if result != "test" {
 		t.Errorf("Expected %s, got %s", "test", result)
 	}
 
 	result = TruncateString("0123456789abcd...", 10)
-	if "0123456789" != result {
+	if result != "0123456789" {
 		t.Errorf("Expected %s, got %s", "0123456789", result)
 	}
 
 	result = TruncateString("测验", 1)
-	if "测" != result {
+	if result != "测" {
 		t.Errorf("Expected %s, got %s", "测", result)
 	}
 

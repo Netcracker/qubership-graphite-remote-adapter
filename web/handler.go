@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import (
 	"net/http"
 	"sync"
 
+	"log/slog"
+
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
@@ -29,8 +31,6 @@ import (
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/template"
 	"github.com/davecgh/go-spew/spew"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -75,7 +75,7 @@ var (
 
 // Handler serves various HTTP endpoints of the remote adapter server
 type Handler struct {
-	logger log.Logger
+	logger *slog.Logger
 
 	cfg      *config.Config
 	router   *mux.Router
@@ -101,7 +101,7 @@ func instrumentHandler(name string, handlerFunc http.HandlerFunc) http.Handler {
 }
 
 // New initializes a new web Handler.
-func New(logger log.Logger, cfg *config.Config) *Handler {
+func New(logger *slog.Logger, cfg *config.Config) *Handler {
 	router := mux.NewRouter()
 	h := &Handler{
 		cfg:      cfg,
@@ -156,20 +156,19 @@ func (h *Handler) ApplyConfig(cfg *config.Config) error {
 }
 
 func (h *Handler) buildClients() {
-	_ = level.Info(h.logger).Log("cfg", h.cfg, "msg", "Building clients")
+	h.logger.Info("Building clients", "cfg", h.cfg)
 	h.writers = nil
 	h.readers = nil
 	if c := graphite.NewClient(h.cfg, h.logger); c != nil {
 		h.writers = append(h.writers, c)
 		h.readers = append(h.readers, c)
 	}
-	_ = level.Info(h.logger).Log(
-		"num_writers", len(h.writers), "num_readers", len(h.readers), "msg", "Built clients")
+	h.logger.Info("Built clients", "num_writers", len(h.writers), "num_readers", len(h.readers))
 }
 
 // Run serves the HTTP endpoints.
 func (h *Handler) Run() error {
-	_ = level.Info(h.logger).Log("ListenAddress", h.cfg.Web.ListenAddress, "msg", "Listening")
+	h.logger.Info("Listening", "ListenAddress", h.cfg.Web.ListenAddress)
 	return http.ListenAndServe(h.cfg.Web.ListenAddress, h.router)
 }
 

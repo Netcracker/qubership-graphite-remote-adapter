@@ -1,4 +1,4 @@
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import (
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/lz4"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/web"
 
+	"log/slog"
+
 	graphiteconfig "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/config"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,7 +44,7 @@ type Server interface {
 }
 
 // NewServer creates a new Server using given protocol, addr and Reader
-func NewServer(protocol, addr string, compressType graphiteconfig.CompressType, logger log.Logger) (Server, error) {
+func NewServer(protocol, addr string, compressType graphiteconfig.CompressType, logger *slog.Logger) (Server, error) {
 	pipeReader, pipeWriter := io.Pipe()
 	switch strings.ToLower(protocol) {
 	case "tcp":
@@ -63,7 +63,7 @@ func NewServer(protocol, addr string, compressType graphiteconfig.CompressType, 
 type TCPServer struct {
 	addr         string
 	server       net.Listener
-	logger       log.Logger
+	logger       *slog.Logger
 	reader       *io.PipeReader
 	writer       *io.PipeWriter
 	compressType graphiteconfig.CompressType
@@ -82,7 +82,7 @@ func (t *TCPServer) Run(wg *sync.WaitGroup) (err error) {
 		if srvErr != nil {
 			if !errors.Is(srvErr, net.ErrClosed) {
 				err = errors.New("could not accept connection")
-				_ = level.Error(t.logger).Log("err", srvErr.Error(), "msg", "failed to accept connection")
+				t.logger.Error("failed to accept connection", "err", srvErr.Error())
 				break
 			}
 		}
@@ -101,18 +101,18 @@ func (t *TCPServer) Run(wg *sync.WaitGroup) (err error) {
 				defer func(lz4reader *lz4.Reader) {
 					errClose := lz4reader.Close()
 					if errClose != nil {
-						_ = level.Error(t.logger).Log("err", errClose.Error(), "msg", "failed to close pipe reader")
+						t.logger.Error("failed to close pipe reader", "err", errClose.Error())
 						err = errClose
 					}
 				}(lz4reader)
 				_, err = io.CopyBuffer(t.writer, lz4reader, make([]byte, 1<<18))
 				if err != nil {
-					_ = level.Error(t.logger).Log("err", err)
+					t.logger.Error("error copying from lz4 reader", "err", err)
 				}
 				// Shut down the connection.
 				err = conn.Close()
 				if err != nil {
-					_ = level.Error(t.logger).Log("err", err.Error(), "msg", "failed to close connection")
+					t.logger.Error("failed to close connection", "err", err.Error())
 				}
 			}(conn)
 		case graphiteconfig.Plain:
@@ -121,12 +121,12 @@ func (t *TCPServer) Run(wg *sync.WaitGroup) (err error) {
 			go func(c net.Conn) {
 				_, err = io.CopyBuffer(t.writer, c, make([]byte, 1<<18))
 				if err != nil {
-					_ = level.Error(t.logger).Log("err", err)
+					t.logger.Error("error copying from conn", "err", err)
 				}
 				// Shut down the connection.
 				err = c.Close()
 				if err != nil {
-					_ = level.Error(t.logger).Log("err", err.Error(), "msg", "failed to close connection")
+					t.logger.Error("failed to close connection", "err", err.Error())
 				}
 			}(conn)
 		}
@@ -136,29 +136,37 @@ func (t *TCPServer) Run(wg *sync.WaitGroup) (err error) {
 
 // Close shuts down the TCP Server
 func (t *TCPServer) Close() (err error) {
-	t.writer.Close()
-	t.reader.Close()
+	err = t.writer.Close()
+	if err != nil {
+		t.logger.Error("failed to close pipe writer", "err", err.Error())
+		return err
+	}
+	err = t.reader.Close()
+	if err != nil {
+		t.logger.Error("failed to close pipe reader", "err", err.Error())
+		return err
+	}
 	return t.server.Close()
 }
 
 func TestCompression(t *testing.T) {
-	debugLevel := &promlog.AllowedLevel{}
+	debugLevel := promslog.NewLevel()
 	err := debugLevel.Set("debug")
 	assert.NoError(t, err)
-	logger := promlog.New(&promlog.Config{Level: debugLevel, Format: &promlog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: promslog.NewFormat()})
 
 	cfg := config.DefaultConfig
 	cfg.Web.ListenAddress = "127.0.0.1:9201"
 	cfg.Graphite.Write.CarbonAddress = ":2003"
 	cfg.Graphite.Write.CompressType = graphiteconfig.LZ4
 
-	webHandler := web.New(log.With(logger, "component", "web"), &cfg)
+	webHandler := web.New(logger.With("component", "web"), &cfg)
 	assert.NoError(t, err)
 
 	go func() {
 		err = webHandler.Run()
 		if err != nil {
-			_ = level.Error(logger).Log("err", err)
+			logger.Error("web handler run error", "err", err)
 		}
 	}()
 
@@ -179,7 +187,12 @@ func TestCompression(t *testing.T) {
 	file, err := os.Open("./testdata/req.sz")
 	assert.NoError(t, err)
 
-	defer file.Close()
+	defer func() {
+		errClose := file.Close()
+		if errClose != nil {
+			t.Logf("failed to close file: %v", errClose)
+		}
+	}()
 	stats, statsErr := file.Stat()
 	assert.NoError(t, statsErr)
 	var size = stats.Size()
@@ -206,7 +219,7 @@ func TestCompression(t *testing.T) {
 		defer func(Body io.ReadCloser) {
 			respErr := Body.Close()
 			if respErr != nil {
-				_ = level.Error(logger).Log("err", respErr, "msg", "failed to close response body")
+				logger.Error("failed to close response body", "err", respErr)
 			}
 		}(res.Body)
 		assert.NotEmpty(t, res)
@@ -226,27 +239,27 @@ func TestCompression(t *testing.T) {
 
 	assert.NotEmpty(t, b)
 	assert.True(t, len(inputBuffer) == len(b))
-	assert.True(t, bytes.Compare(inputBuffer, b) == 0)
+	assert.True(t, bytes.Equal(inputBuffer, b))
 }
 
 func TestShortSizeCompression(t *testing.T) {
-	debugLevel := &promlog.AllowedLevel{}
+	debugLevel := promslog.NewLevel()
 	err := debugLevel.Set("debug")
 	assert.NoError(t, err)
-	logger := promlog.New(&promlog.Config{Level: debugLevel, Format: &promlog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: promslog.NewFormat()})
 
 	cfg := config.DefaultConfig
 	cfg.Web.ListenAddress = "127.0.0.1:9202"
 	cfg.Graphite.Write.CarbonAddress = ":2004"
 	cfg.Graphite.Write.CompressType = graphiteconfig.LZ4
 
-	webHandler := web.New(log.With(logger, "component", "web"), &cfg)
+	webHandler := web.New(logger.With("component", "web"), &cfg)
 	assert.NoError(t, err)
 
 	go func() {
 		err = webHandler.Run()
 		if err != nil {
-			_ = level.Error(logger).Log("err", err)
+			logger.Error("web handler run error", "err", err)
 		}
 	}()
 
@@ -267,7 +280,12 @@ func TestShortSizeCompression(t *testing.T) {
 	file, err := os.Open("./testdata/short_req.sz")
 	assert.NoError(t, err)
 
-	defer file.Close()
+	defer func() {
+		errClose := file.Close()
+		if errClose != nil {
+			logger.Error("failed to close file", "err", errClose)
+		}
+	}()
 	stats, statsErr := file.Stat()
 	assert.NoError(t, statsErr)
 	var size = stats.Size()
@@ -294,7 +312,7 @@ func TestShortSizeCompression(t *testing.T) {
 		defer func(Body io.ReadCloser) {
 			respErr := Body.Close()
 			if respErr != nil {
-				_ = level.Error(logger).Log("err", respErr, "msg", "failed to close response body")
+				logger.Error("failed to close response body", "err", respErr)
 			}
 		}(res.Body)
 		assert.NotEmpty(t, res)
@@ -314,28 +332,28 @@ func TestShortSizeCompression(t *testing.T) {
 
 	assert.NotEmpty(t, b)
 	assert.True(t, len(inputBuffer) == len(b))
-	assert.True(t, bytes.Compare(inputBuffer, b) == 0)
+	assert.True(t, bytes.Equal(inputBuffer, b))
 }
 
 func TestWithoutCompression(t *testing.T) {
-	debugLevel := &promlog.AllowedLevel{}
+	debugLevel := promslog.NewLevel()
 	err := debugLevel.Set("debug")
 	assert.NoError(t, err)
-	logger := promlog.New(&promlog.Config{Level: debugLevel, Format: &promlog.AllowedFormat{}})
+	logger := promslog.New(&promslog.Config{Level: debugLevel, Format: promslog.NewFormat()})
 
 	cfg := config.DefaultConfig
 	cfg.Web.ListenAddress = "127.0.0.1:9203"
 	cfg.Graphite.Write.CarbonAddress = ":2005"
 	cfg.Graphite.Write.CompressType = graphiteconfig.Plain
 
-	webHandler := web.New(log.With(logger, "component", "web"), &cfg)
+	webHandler := web.New(logger.With("component", "web"), &cfg)
 	err = webHandler.ApplyConfig(&cfg)
 	assert.NoError(t, err)
 
 	go func() {
 		err = webHandler.Run()
 		if err != nil {
-			_ = level.Error(logger).Log("err", err)
+			logger.Error("web handler run error", "err", err)
 		}
 	}()
 
@@ -356,7 +374,12 @@ func TestWithoutCompression(t *testing.T) {
 	file, err := os.Open("./testdata/req.sz")
 	assert.NoError(t, err)
 
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			logger.Error("failed to close file", "err", err)
+		}
+	}()
 	stats, statsErr := file.Stat()
 	assert.NoError(t, statsErr)
 	var size = stats.Size()
@@ -383,7 +406,7 @@ func TestWithoutCompression(t *testing.T) {
 		defer func(Body io.ReadCloser) {
 			respErr := Body.Close()
 			if respErr != nil {
-				_ = level.Error(logger).Log("err", respErr, "msg", "failed to close response body")
+				logger.Error("failed to close response body", "err", respErr)
 			}
 		}(res.Body)
 		assert.NotEmpty(t, res)
@@ -403,5 +426,5 @@ func TestWithoutCompression(t *testing.T) {
 
 	assert.NotEmpty(t, b)
 	assert.True(t, len(inputBuffer) == len(b))
-	assert.True(t, bytes.Compare(inputBuffer, b) == 0)
+	assert.True(t, bytes.Equal(inputBuffer, b))
 }

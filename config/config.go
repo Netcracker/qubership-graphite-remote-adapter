@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promslog"
 	"gopkg.in/yaml.v3"
 )
 
@@ -45,8 +45,8 @@ func Load(s string) (*Config, error) {
 }
 
 // LoadFile parses the given YAML file into a Config.
-func LoadFile(logger log.Logger, filename string) (*Config, error) {
-	_ = level.Info(logger).Log("file", filename, "msg", "Loading configuration file")
+func LoadFile(logger *slog.Logger, filename string) (*Config, error) {
+	logger.Info("Loading configuration file", "file", filename)
 	content, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -61,6 +61,7 @@ func LoadFile(logger log.Logger, filename string) (*Config, error) {
 
 // DefaultConfig is the default top-level configuration.
 var DefaultConfig = Config{
+	LogLevel: *promslog.NewLevel(),
 	Web: webOptions{
 		ListenAddress: "0.0.0.0:9201",
 		TelemetryPath: "/metrics",
@@ -79,7 +80,7 @@ var DefaultConfig = Config{
 // Config is the top-level configuration.
 type Config struct {
 	ConfigFile string
-	LogLevel   promlog.AllowedLevel
+	LogLevel   promslog.Level
 	Web        webOptions      `yaml:"web,omitempty" json:"web,omitempty"`
 	Read       readOptions     `yaml:"read,omitempty" json:"read,omitempty"`
 	Write      writeOptions    `yaml:"write,omitempty" json:"write,omitempty"`
@@ -97,7 +98,24 @@ func (c Config) String() string {
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
 	}
-	str := strings.ReplaceAll(string(b), "loglevel: {}", "loglevel: "+c.LogLevel.String())
+	// Safely replace the placeholder for loglevel with the string
+	// representation. Calling `c.LogLevel.String()` may panic when the
+	// underlying state is not initialized, so call it in a recover block
+	// and skip replacement on failure.
+	s := string(b)
+	levelStr := ""
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				levelStr = ""
+			}
+		}()
+		levelStr = c.LogLevel.String()
+	}()
+	if levelStr != "" {
+		s = strings.ReplaceAll(s, "loglevel: {}", "loglevel: "+levelStr)
+	}
+	str := s
 	return str
 }
 

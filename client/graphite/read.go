@@ -1,6 +1,6 @@
 // Copyright 2015 The Prometheus Authors
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/paths"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/common/model"
 	plabels "github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/prompb"
-	"golang.org/x/net/context"
 )
 
 func (client *Client) QueryToTargets(ctx context.Context, query *prompb.Query, graphitePrefix string) ([]string, error) {
@@ -54,9 +54,7 @@ func (client *Client) QueryToTargets(ctx context.Context, query *prompb.Query, g
 	queryStr := graphitePrefix + name + ".**"
 	expandURL, err := PrepareURL(client.cfg.Read.URL, expandEndpoint, map[string]string{"format": "json", "leavesOnly": "1", "query": queryStr})
 	if err != nil {
-		_ = level.Warn(client.logger).Log(
-			"graphite_web", client.cfg.Read.URL, "path", expandEndpoint,
-			"err", err, "msg", "Error preparing URL")
+		client.logger.Warn("Error preparing URL", "graphite_web", client.cfg.Read.URL, "path", expandEndpoint, "err", err)
 		return nil, err
 	}
 
@@ -64,17 +62,13 @@ func (client *Client) QueryToTargets(ctx context.Context, query *prompb.Query, g
 	expandResponse := ExpandResponse{}
 	body, err := FetchURL(ctx, client.logger, expandURL)
 	if err != nil {
-		_ = level.Warn(client.logger).Log(
-			"url", expandURL, "body", utils.TruncateString(string(body), 140)+"...",
-			"err", err, "msg", "Error fetching URL")
+		client.logger.Warn("Error fetching URL", "url", expandURL, "body", utils.TruncateString(string(body), 140)+"...", "err", err)
 		return nil, err
 	}
 
 	err = json.Unmarshal(body, &expandResponse)
 	if err != nil {
-		_ = level.Warn(client.logger).Log(
-			"url", expandURL, "body", utils.TruncateString(string(body), 140)+"...",
-			"err", err, "msg", "Error parsing expand endpoint response body")
+		client.logger.Warn("Error parsing expand endpoint response body", "url", expandURL, "body", utils.TruncateString(string(body), 140)+"...", "err", err)
 		return nil, err
 	}
 
@@ -121,8 +115,7 @@ func (client *Client) filterTargets(query *prompb.Query, targets []string, graph
 		// Put labels in a map.
 		prompbLabels, err := paths.MetricLabelsFromPath(target, graphitePrefix)
 		if err != nil {
-			_ = level.Warn(client.logger).Log(
-				"path", target, "prefix", graphitePrefix, "err", err)
+			client.logger.Warn("Error parsing metric labels from path", "path", target, "prefix", graphitePrefix, "err", err)
 			continue
 		}
 		labelMap := make(map[string]string, len(prompbLabels))
@@ -131,9 +124,7 @@ func (client *Client) filterTargets(query *prompb.Query, targets []string, graph
 			labelMap[label.Name] = label.Value
 		}
 
-		_ = level.Debug(client.logger).Log(
-			"target", target, "prefix", graphitePrefix,
-			"labels", labelMap, "msg", "Filtering target")
+		client.logger.Debug("Filtering target", "target", target, "prefix", graphitePrefix, "labels", labelMap)
 
 		// See if all matchers are satisfied.
 		match := true
@@ -161,26 +152,20 @@ func (client *Client) filterTargets(query *prompb.Query, targets []string, graph
 func (client *Client) TargetToTimeseries(ctx context.Context, target string, from string, until string, graphitePrefix string) ([]*prompb.TimeSeries, error) {
 	renderURL, err := PrepareURL(client.cfg.Read.URL, renderEndpoint, map[string]string{"format": "json", "from": from, "until": until, "target": target})
 	if err != nil {
-		_ = level.Warn(client.logger).Log(
-			"graphite_web", client.cfg.Read.URL, "path", renderEndpoint,
-			"err", err, "msg", "Error preparing URL")
+		client.logger.Warn("Error preparing URL", "graphite_web", client.cfg.Read.URL, "path", renderEndpoint, "err", err)
 		return nil, err
 	}
 
 	renderResponses := make([]RenderResponse, 0)
 	body, err := FetchURL(ctx, client.logger, renderURL)
 	if err != nil {
-		_ = level.Warn(client.logger).Log(
-			"url", renderURL, "body", utils.TruncateString(string(body), 140)+"...",
-			"err", err, "ctx", ctx, "msg", "Error fetching URL")
+		client.logger.Warn("Error fetching URL", "url", renderURL, "body", utils.TruncateString(string(body), 140)+"...", "err", err, "ctx", ctx)
 		return nil, err
 	}
 
 	err = json.Unmarshal(body, &renderResponses)
 	if err != nil {
-		_ = level.Warn(client.logger).Log(
-			"url", renderURL, "body", utils.TruncateString(string(body), 140)+"...",
-			"err", err, "msg", "Error parsing render endpoint response body")
+		client.logger.Warn("Error parsing render endpoint response body", "url", renderURL, "body", utils.TruncateString(string(body), 140)+"...", "err", err)
 		return nil, err
 	}
 
@@ -195,8 +180,7 @@ func (client *Client) TargetToTimeseries(ctx context.Context, target string, fro
 		}
 
 		if err != nil {
-			_ = level.Warn(client.logger).Log(
-				"path", renderResponse.Target, "prefix", graphitePrefix, "err", err)
+			client.logger.Warn("Error extracting labels for timeseries", "path", renderResponse.Target, "prefix", graphitePrefix, "err", err)
 			return nil, err
 		}
 
@@ -259,7 +243,7 @@ func (client *Client) handleReadQuery(ctx context.Context, query *prompb.Query, 
 	until = min(now-delta, until)
 
 	if until < from {
-		_ = level.Debug(client.logger).Log("msg", "Skipping query with empty time range")
+		client.logger.Debug("Skipping query with empty time range")
 		return queryResult, nil
 	}
 	fromStr := strconv.Itoa(from)
@@ -278,8 +262,7 @@ func (client *Client) handleReadQuery(ctx context.Context, query *prompb.Query, 
 		return nil, err
 	}
 
-	_ = level.Debug(client.logger).Log(
-		"targets", targets, "from", fromStr, "until", untilStr, "msg", "Fetching data")
+	client.logger.Debug("Fetching data", "targets", targets, "from", fromStr, "until", untilStr)
 	client.fetchData(ctx, queryResult, targets, fromStr, untilStr, graphitePrefix)
 	return queryResult, nil
 
@@ -304,9 +287,9 @@ func (client *Client) fetchData(ctx context.Context, queryResult *prompb.QueryRe
 				// than nothing.
 				ts, err := client.TargetToTimeseries(ctx, target, fromStr, untilStr, graphitePrefix)
 				if err != nil {
-					_ = level.Warn(client.logger).Log("target", target, "err", err, "msg", "Error fetching and parsing target datapoints")
+					client.logger.Warn("Error fetching and parsing target datapoints", "target", target, "err", err)
 				} else {
-					_ = level.Debug(client.logger).Log("reading responses")
+					client.logger.Debug("reading responses")
 					for _, t := range ts {
 						output <- t
 					}
@@ -346,7 +329,7 @@ func (client *Client) fetchData(ctx context.Context, queryResult *prompb.QueryRe
 
 // Read implements the client.Reader interface.
 func (client *Client) Read(req *prompb.ReadRequest, r *http.Request) (*prompb.ReadResponse, error) {
-	_ = level.Debug(client.logger).Log("req", req, "msg", "Remote read")
+	client.logger.Debug("Remote read", "req", req)
 
 	if client.cfg.Read.URL == "" {
 		return nil, nil

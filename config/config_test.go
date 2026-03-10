@@ -1,5 +1,5 @@
 // Copyright 2017 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright 2024-2026 NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,11 +20,15 @@ import (
 	"testing"
 	"time"
 
+	"io"
+	"log/slog"
+
 	graphite "github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
-	"github.com/go-kit/log"
+	"github.com/prometheus/common/promslog"
 )
 
 var expectedConf = &Config{
+	LogLevel: *promslog.NewLevel(),
 	Web: webOptions{
 		ListenAddress: "1.2.3.4:666",
 		TelemetryPath: "/coolMetrics",
@@ -42,7 +46,7 @@ var expectedConf = &Config{
 }
 
 func TestLoadConfigFile(t *testing.T) {
-	c, err := LoadFile(log.NewNopLogger(), "testdata/conf.good.yml")
+	c, err := LoadFile(slog.New(slog.NewTextHandler(io.Discard, nil)), "testdata/conf.good.yml")
 	if err != nil {
 		t.Fatalf("Error parsing %s: %s", "testdata/conf.good.yml", err)
 	}
