@@ -3,11 +3,23 @@ updates:
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
-    interval: "monthly"
+    interval: "weekly"
+  commit-message:
+    prefix: chore
+    prefix-development: chore
+    include: scope
+  groups:
+    actions-deps:
+      patterns:
+      - "*"
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
-    interval: "monthly"
+    interval: "weekly"
+  commit-message:
+    prefix: chore
+    prefix-development: chore
+    include: scope
   groups:
     prometheus:
       patterns:
@@ -25,4 +37,12 @@ updates:
   - "/"
   - "/docker"
   schedule:
-    interval: "monthly"
+    interval: "weekly"
+  commit-message:
+    prefix: chore
+    prefix-development: chore
+    include: scope
+  groups:
+    actions-deps:
+      patterns:
+      - "*"
