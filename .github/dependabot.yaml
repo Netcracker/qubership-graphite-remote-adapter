@@ -11,7 +11,7 @@ updates:
   groups:
     actions-deps:
       patterns:
-        - "*"
+      - "*"
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
@@ -34,8 +34,8 @@ updates:
 # Docker bot configurations
 - package-ecosystem: "docker"
   directories:
-    - "/"
-    - "/docker"
+  - "/"
+  - "/docker"
   schedule:
     interval: "weekly"
   commit-message:
@@ -45,4 +45,4 @@ updates:
   groups:
     actions-deps:
       patterns:
-        - "*"
+      - "*"
