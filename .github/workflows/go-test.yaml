@@ -38,7 +38,7 @@ jobs:
     with:
       go-module-dir: '.'
       sonar-project-key: ${{ needs.prepare.outputs.sonar-project-key }}
-      cover-packages: './controllers'
+      cover-packages: './...'
       skip-docker: true
     secrets: inherit
     permissions:
