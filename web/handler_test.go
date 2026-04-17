@@ -175,7 +175,7 @@ func TestHandler_ReloadSuccess(t *testing.T) {
 	handler.router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "Config succesfully reloaded.")
+	assert.Contains(t, w.Body.String(), "Config successfully reloaded.")
 }
 
 func TestHandler_ReloadFailure(t *testing.T) {

@@ -154,7 +154,11 @@ func TestClient_TargetWithConnection(t *testing.T) {
 	client := &Client{}
 	c1, c2 := net.Pipe()
 	client.carbonCon = c1
-	defer c2.Close()
+	defer func() {
+		if err := c2.Close(); err != nil {
+			t.Logf("Error closing pipe: %v", err)
+		}
+	}()
 
 	target := client.Target()
 	assert.NotEqual(t, "unknown", target)
