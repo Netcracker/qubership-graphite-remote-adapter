@@ -5,6 +5,40 @@ import (
 	"testing"
 )
 
+func containsName(list []string, name string) bool {
+	for _, n := range list {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
+func requireAssetDirEntries(t *testing.T, path string, expected ...string) {
+	t.Helper()
+
+	entries, err := AssetDir(path)
+	if err != nil {
+		t.Fatalf("AssetDir(%q) returned error: %v", path, err)
+	}
+	if len(entries) == 0 {
+		t.Fatalf("expected AssetDir(%q) to return directory entries", path)
+	}
+	for _, name := range expected {
+		if !containsName(entries, name) {
+			t.Fatalf("AssetDir(%q) missing %s", path, name)
+		}
+	}
+}
+
+func requireAssetDirError(t *testing.T, path string) {
+	t.Helper()
+
+	if _, err := AssetDir(path); err == nil {
+		t.Fatalf("expected AssetDir(%q) to return an error", path)
+	}
+}
+
 func TestAsset(t *testing.T) {
 	data, err := Asset("templates/_base.html")
 	if err != nil {
@@ -67,60 +101,19 @@ func TestAssetNames(t *testing.T) {
 }
 
 func TestAssetDir(t *testing.T) {
-	dirs, err := AssetDir("")
-	if err != nil {
-		t.Fatalf("AssetDir(\"\") returned error: %v", err)
-	}
-	if len(dirs) == 0 {
-		t.Fatal("expected AssetDir(\"\") to return directory entries")
-	}
-	contains := func(list []string, name string) bool {
-		for _, n := range list {
-			if n == name {
-				return true
-			}
-		}
-		return false
-	}
-	if !contains(dirs, "static") {
-		t.Fatal("AssetDir(\"\") missing static directory")
-	}
-	if !contains(dirs, "templates") {
-		t.Fatal("AssetDir(\"\") missing templates directory")
+	tests := []struct {
+		path     string
+		expected []string
+	}{
+		{path: "", expected: []string{"static", "templates"}},
+		{path: "templates", expected: []string{"_base.html", "simulation.html", "status.html"}},
+		{path: "static/js", expected: []string{"api.js", "bootstrap.min.js", "jquery.js"}},
 	}
 
-	files, err := AssetDir("templates")
-	if err != nil {
-		t.Fatalf("AssetDir(templates) returned error: %v", err)
-	}
-	if !contains(files, "_base.html") {
-		t.Fatal("AssetDir(templates) missing _base.html")
-	}
-	if !contains(files, "simulation.html") {
-		t.Fatal("AssetDir(templates) missing simulation.html")
-	}
-	if !contains(files, "status.html") {
-		t.Fatal("AssetDir(templates) missing status.html")
+	for _, tt := range tests {
+		requireAssetDirEntries(t, tt.path, tt.expected...)
 	}
 
-	jsFiles, err := AssetDir("static/js")
-	if err != nil {
-		t.Fatalf("AssetDir(static/js) returned error: %v", err)
-	}
-	if !contains(jsFiles, "api.js") {
-		t.Fatal("AssetDir(static/js) missing api.js")
-	}
-	if !contains(jsFiles, "bootstrap.min.js") {
-		t.Fatal("AssetDir(static/js) missing bootstrap.min.js")
-	}
-	if !contains(jsFiles, "jquery.js") {
-		t.Fatal("AssetDir(static/js) missing jquery.js")
-	}
-
-	if _, err := AssetDir("templates/_base.html"); err == nil {
-		t.Fatal("expected AssetDir on a file path to return an error")
-	}
-	if _, err := AssetDir("does/not/exist"); err == nil {
-		t.Fatal("expected AssetDir on a missing path to return an error")
-	}
+	requireAssetDirError(t, "templates/_base.html")
+	requireAssetDirError(t, "does/not/exist")
 }
