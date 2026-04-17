@@ -59,7 +59,7 @@ func TestMustAsset(t *testing.T) {
 	}
 
 	defer func() {
-		if r := recover(); r == nil {
+		if recover() == nil {
 			t.Fatal("MustAsset did not panic for missing asset")
 		}
 	}()
