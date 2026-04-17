@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/utils/lz4"
 	"github.com/Netcracker/qubership-graphite-remote-adapter/web"
@@ -146,7 +147,25 @@ func (t *TCPServer) Close() (err error) {
 		t.logger.Error("failed to close pipe reader", "err", err.Error())
 		return err
 	}
+	if t.server == nil {
+		return nil
+	}
 	return t.server.Close()
+}
+
+func waitForHTTPServer(t *testing.T, addr string) {
+	t.Helper()
+
+	assert.Eventually(t, func() bool {
+		conn, err := net.DialTimeout("tcp", addr, 100*time.Millisecond)
+		if err != nil {
+			return false
+		}
+		if closeErr := conn.Close(); closeErr != nil {
+			t.Logf("failed to close readiness probe connection: %v", closeErr)
+		}
+		return true
+	}, 5*time.Second, 50*time.Millisecond, "web server did not become ready on %s", addr)
 }
 
 func TestCompression(t *testing.T) {
@@ -164,9 +183,9 @@ func TestCompression(t *testing.T) {
 	assert.NoError(t, err)
 
 	go func() {
-		err = webHandler.Run()
-		if err != nil {
-			logger.Error("web handler run error", "err", err)
+		runErr := webHandler.Run()
+		if runErr != nil {
+			logger.Error("web handler run error", "err", runErr)
 		}
 	}()
 
@@ -177,12 +196,15 @@ func TestCompression(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		err = srv.Run(&wg)
-		assert.NoError(t, err, "error running TCP server")
-		err = srv.Close()
-		assert.NoError(t, err, "error closing TCP server")
+		runErr := srv.Run(&wg)
+		assert.NoError(t, runErr, "error running TCP server")
+		if runErr == nil {
+			closeErr := srv.Close()
+			assert.NoError(t, closeErr, "error closing TCP server")
+		}
 	}()
 	wg.Wait()
+	waitForHTTPServer(t, cfg.Web.ListenAddress)
 
 	file, err := os.Open("./testdata/req.sz")
 	assert.NoError(t, err)
@@ -209,23 +231,21 @@ func TestCompression(t *testing.T) {
 	r, err := http.NewRequest("POST", posturl, bytes.NewBuffer(metrics))
 	assert.NoError(t, err)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		client := &http.Client{}
-		var res *http.Response
-		res, err = client.Do(r)
-		assert.NoError(t, err)
-		defer func(Body io.ReadCloser) {
-			respErr := Body.Close()
-			if respErr != nil {
-				logger.Error("failed to close response body", "err", respErr)
-			}
-		}(res.Body)
-		assert.NotEmpty(t, res)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-	}()
-	wg.Wait()
+	client := &http.Client{}
+	res, reqErr := client.Do(r)
+	assert.NoError(t, reqErr)
+	if reqErr == nil {
+		assert.NotNil(t, res)
+		if res != nil {
+			defer func(body io.ReadCloser) {
+				respErr := body.Close()
+				if respErr != nil {
+					logger.Error("failed to close response body", "err", respErr)
+				}
+			}(res.Body)
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		}
+	}
 
 	b := make([]byte, len(inputBuffer))
 	wg.Add(1)
@@ -257,9 +277,9 @@ func TestShortSizeCompression(t *testing.T) {
 	assert.NoError(t, err)
 
 	go func() {
-		err = webHandler.Run()
-		if err != nil {
-			logger.Error("web handler run error", "err", err)
+		runErr := webHandler.Run()
+		if runErr != nil {
+			logger.Error("web handler run error", "err", runErr)
 		}
 	}()
 
@@ -270,12 +290,15 @@ func TestShortSizeCompression(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		err = srv.Run(&wg)
-		assert.NoError(t, err, "error running TCP server")
-		err = srv.Close()
-		assert.NoError(t, err, "error closing TCP server")
+		runErr := srv.Run(&wg)
+		assert.NoError(t, runErr, "error running TCP server")
+		if runErr == nil {
+			closeErr := srv.Close()
+			assert.NoError(t, closeErr, "error closing TCP server")
+		}
 	}()
 	wg.Wait()
+	waitForHTTPServer(t, cfg.Web.ListenAddress)
 
 	file, err := os.Open("./testdata/short_req.sz")
 	assert.NoError(t, err)
@@ -302,23 +325,21 @@ func TestShortSizeCompression(t *testing.T) {
 	r, err := http.NewRequest("POST", posturl, bytes.NewBuffer(metrics))
 	assert.NoError(t, err)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		client := &http.Client{}
-		var res *http.Response
-		res, err = client.Do(r)
-		assert.NoError(t, err)
-		defer func(Body io.ReadCloser) {
-			respErr := Body.Close()
-			if respErr != nil {
-				logger.Error("failed to close response body", "err", respErr)
-			}
-		}(res.Body)
-		assert.NotEmpty(t, res)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-	}()
-	wg.Wait()
+	client := &http.Client{}
+	res, reqErr := client.Do(r)
+	assert.NoError(t, reqErr)
+	if reqErr == nil {
+		assert.NotNil(t, res)
+		if res != nil {
+			defer func(body io.ReadCloser) {
+				respErr := body.Close()
+				if respErr != nil {
+					logger.Error("failed to close response body", "err", respErr)
+				}
+			}(res.Body)
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		}
+	}
 
 	b := make([]byte, len(inputBuffer))
 	wg.Add(1)
@@ -351,9 +372,9 @@ func TestWithoutCompression(t *testing.T) {
 	assert.NoError(t, err)
 
 	go func() {
-		err = webHandler.Run()
-		if err != nil {
-			logger.Error("web handler run error", "err", err)
+		runErr := webHandler.Run()
+		if runErr != nil {
+			logger.Error("web handler run error", "err", runErr)
 		}
 	}()
 
@@ -364,12 +385,15 @@ func TestWithoutCompression(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		err = srv.Run(&wg)
-		assert.NoError(t, err, "error running TCP server")
-		err = srv.Close()
-		assert.NoError(t, err, "error closing TCP server")
+		runErr := srv.Run(&wg)
+		assert.NoError(t, runErr, "error running TCP server")
+		if runErr == nil {
+			closeErr := srv.Close()
+			assert.NoError(t, closeErr, "error closing TCP server")
+		}
 	}()
 	wg.Wait()
+	waitForHTTPServer(t, cfg.Web.ListenAddress)
 
 	file, err := os.Open("./testdata/req.sz")
 	assert.NoError(t, err)
@@ -396,23 +420,21 @@ func TestWithoutCompression(t *testing.T) {
 	r, err := http.NewRequest("POST", posturl, bytes.NewBuffer(metrics))
 	assert.NoError(t, err)
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		client := &http.Client{}
-		var res *http.Response
-		res, err = client.Do(r)
-		assert.NoError(t, err)
-		defer func(Body io.ReadCloser) {
-			respErr := Body.Close()
-			if respErr != nil {
-				logger.Error("failed to close response body", "err", respErr)
-			}
-		}(res.Body)
-		assert.NotEmpty(t, res)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-	}()
-	wg.Wait()
+	client := &http.Client{}
+	res, reqErr := client.Do(r)
+	assert.NoError(t, reqErr)
+	if reqErr == nil {
+		assert.NotNil(t, res)
+		if res != nil {
+			defer func(body io.ReadCloser) {
+				respErr := body.Close()
+				if respErr != nil {
+					logger.Error("failed to close response body", "err", respErr)
+				}
+			}(res.Body)
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		}
+	}
 
 	b := make([]byte, len(inputBuffer))
 	wg.Add(1)
