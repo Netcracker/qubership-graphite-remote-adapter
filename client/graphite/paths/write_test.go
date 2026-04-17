@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package paths
 
 import (
+	"math"
 	"testing"
 
 	"github.com/Netcracker/qubership-graphite-remote-adapter/client/graphite/config"
@@ -192,5 +193,31 @@ write:
 	t.Log(testConfigNilLabel.Write.Rules[0])
 	actual, err := pathsFromMetric(metric, FormatCarbon, "", testConfigNilLabel.Write.Rules, testConfigNilLabel.Write.TemplateData)
 	require.Empty(t, actual)
+	require.Error(t, err)
+}
+
+func TestToDatapoints(t *testing.T) {
+	sample := &model.Sample{
+		Metric:    metric,
+		Value:     42.5,
+		Timestamp: model.TimeFromUnix(1234567890),
+	}
+	points, err := ToDatapoints(sample, FormatCarbon, "", nil, nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, points)
+	// Check that points contain the value
+	for _, p := range points {
+		require.Contains(t, string(p), "42.500000")
+		require.Contains(t, string(p), "1234567890")
+	}
+}
+
+func TestToDatapointsInvalidValue(t *testing.T) {
+	sample := &model.Sample{
+		Metric:    metric,
+		Value:     model.SampleValue(math.NaN()),
+		Timestamp: model.Time(1234567890),
+	}
+	_, err := ToDatapoints(sample, FormatCarbon, "", nil, nil)
 	require.Error(t, err)
 }

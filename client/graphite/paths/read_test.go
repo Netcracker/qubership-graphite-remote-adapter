@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,14 +34,19 @@ func TestMetricLabelsFromPath(t *testing.T) {
 	actualLabels, _ := MetricLabelsFromPath(path, prefix)
 	require.Equal(t, expectedLabels, actualLabels)
 }
-func TestMetricLabelsFromSpecialPath(t *testing.T) {
-	path := "prometheus-prefix.test.owner.team-Y.interface.Hu0%2F0%2F1%2F3%2E99"
-	prefix := "prometheus-prefix"
-	expectedLabels := []prompb.Label{
-		{Name: model.MetricNameLabel, Value: "test"},
-		{Name: "owner", Value: "team-Y"},
-		{Name: "interface", Value: "Hu0/0/1/3.99"},
+func TestMetricLabelsFromTags(t *testing.T) {
+	tags := map[string]string{
+		"name":     "prefix.metric",
+		"owner":    "team-X",
+		"instance": "server1",
 	}
-	actualLabels, _ := MetricLabelsFromPath(path, prefix)
+	prefix := "prefix."
+	expectedLabels := []prompb.Label{
+		{Name: "instance", Value: "server1"},
+		{Name: model.MetricNameLabel, Value: "metric"},
+		{Name: "owner", Value: "team-X"},
+	}
+	actualLabels, err := MetricLabelsFromTags(tags, prefix)
+	require.NoError(t, err)
 	require.Equal(t, expectedLabels, actualLabels)
 }

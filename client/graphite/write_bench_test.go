@@ -79,6 +79,7 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 	cfg := &config.DefaultConfig
 	cfg.Graphite.Write.CarbonAddress = "127.0.0.1"
 	client := NewClient(cfg, logger)
+	defer client.Shutdown()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
