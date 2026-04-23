@@ -1,4 +1,4 @@
-// Copyright 2024-2026 NetCracker Technology Corporation
+// Copyright NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ func benchmarkTestProcessPrepareWrite(b *testing.B, n int) {
 	cfg := &config.DefaultConfig
 	cfg.Graphite.Write.CarbonAddress = "127.0.0.1"
 	client := NewClient(cfg, logger)
+	defer client.Shutdown()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

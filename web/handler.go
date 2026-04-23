@@ -189,7 +189,7 @@ func (h *Handler) reload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	_, _ = fmt.Fprintf(w, "Config succesfully reloaded.")
+	_, _ = fmt.Fprintf(w, "Config successfully reloaded.")
 }
 
 func (h *Handler) home(w http.ResponseWriter, r *http.Request) {

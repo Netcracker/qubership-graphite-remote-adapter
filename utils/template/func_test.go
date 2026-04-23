@@ -1,5 +1,5 @@
 // Copyright 2018 Thibault Chataigner <thibault.chataigner@gmail.com>
-// Copyright 2024-2025 NetCracker Technology Corporation
+// Copyright NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,5 +55,38 @@ func Test_aTemplateCanReplaceRegex(t *testing.T) {
 	actual := buf.String()
 	if actual != "long-hostname-machine" {
 		t.Errorf("replaceRegex function not properly implemented or template misconfigured: result %s", actual)
+	}
+}
+
+func Test_isSet(t *testing.T) {
+	type TestStruct struct {
+		Field1 string
+		Field2 int
+	}
+
+	data := TestStruct{Field1: "value", Field2: 42}
+
+	if !isSet(data, "Field1") {
+		t.Errorf("isSet should return true for existing field")
+	}
+	if !isSet(data, "Field2") {
+		t.Errorf("isSet should return true for existing field")
+	}
+	if isSet(data, "Field3") {
+		t.Errorf("isSet should return false for non-existing field")
+	}
+
+	// Test with pointer
+	dataPtr := &data
+	if !isSet(dataPtr, "Field1") {
+		t.Errorf("isSet should return true for existing field on pointer")
+	}
+	if isSet(dataPtr, "Field3") {
+		t.Errorf("isSet should return false for non-existing field on pointer")
+	}
+
+	// Test with non-struct
+	if isSet("string", "Field1") {
+		t.Errorf("isSet should return false for non-struct")
 	}
 }
