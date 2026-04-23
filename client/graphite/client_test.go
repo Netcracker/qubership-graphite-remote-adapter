@@ -143,6 +143,7 @@ func TestClient_ShutdownClosesConnection(t *testing.T) {
 	client := &Client{}
 	c1, c2 := net.Pipe()
 	client.carbonCon = c1
+	t.Cleanup(func() { _ = c2.Close() })
 
 	client.Shutdown()
 

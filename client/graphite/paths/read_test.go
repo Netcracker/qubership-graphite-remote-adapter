@@ -34,6 +34,19 @@ func TestMetricLabelsFromPath(t *testing.T) {
 	actualLabels, _ := MetricLabelsFromPath(path, prefix)
 	require.Equal(t, expectedLabels, actualLabels)
 }
+func TestMetricLabelsFromURLEncodedPath(t *testing.T) {
+	path := "prometheus-prefix.test.owner.team-Y.interface.Hu0%2F0%2F1%2F3%2E99"
+	prefix := "prometheus-prefix"
+	expectedLabels := []prompb.Label{
+		{Name: model.MetricNameLabel, Value: "test"},
+		{Name: "owner", Value: "team-Y"},
+		{Name: "interface", Value: "Hu0/0/1/3.99"},
+	}
+	actualLabels, err := MetricLabelsFromPath(path, prefix)
+	require.NoError(t, err)
+	require.Equal(t, expectedLabels, actualLabels)
+}
+
 func TestMetricLabelsFromTags(t *testing.T) {
 	tags := map[string]string{
 		"name":     "prefix.metric",

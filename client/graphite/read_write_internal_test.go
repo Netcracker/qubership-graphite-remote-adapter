@@ -1,4 +1,4 @@
-// Copyright 2026 NetCracker Technology Corporation
+// Copyright NetCracker Technology Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -131,9 +131,10 @@ func TestConnectToCarbonReusesConnection(t *testing.T) {
 	}
 
 	c1, c2 := net.Pipe()
-	defer func() {
+	t.Cleanup(func() {
+		_ = c1.Close()
 		_ = c2.Close()
-	}()
+	})
 	client.carbonCon = c1
 	client.carbonLastReconnectTime = time.Now()
 
