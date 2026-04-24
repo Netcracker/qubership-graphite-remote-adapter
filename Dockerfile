@@ -42,12 +42,22 @@ COPY web/ web/
 COPY VERSION VERSION
 
 # Install LZ4 libraries to build
+# renovate: datasource=repology depName=alpine_3_23/openssl versioning=loose alpine-minor=3.23
+ARG OPENSSL_VERSION=3.5.6-r0
+# renovate: datasource=repology depName=alpine_3_23/make versioning=loose alpine-minor=3.23
+ARG MAKE_VERSION=4.4.1-r3
+# renovate: datasource=repology depName=alpine_3_23/build-base versioning=loose alpine-minor=3.23
+ARG BUILD_BASE_VERSION=0.5-r3
+# renovate: datasource=repology depName=alpine_3_23/lz4-dev versioning=loose alpine-minor=3.23
+ARG LZ4_DEV_VERSION=1.10.0-r0
+# renovate: datasource=repology depName=alpine_3_23/lz4 versioning=loose alpine-minor=3.23
+ARG LZ4_VERSION=1.10.0-r0
 RUN apk add --no-cache \
-        openssl=3.5.6-r0 \
-        make=4.4.1-r3 \
-        build-base=0.5-r3 \
-        lz4-dev=1.10.0-r0 \
-        lz4=1.10.0-r0
+        openssl=${OPENSSL_VERSION} \
+        make=${MAKE_VERSION} \
+        build-base=${BUILD_BASE_VERSION} \
+        lz4-dev=${LZ4_DEV_VERSION} \
+        lz4=${LZ4_VERSION}
 
 # Build
 RUN CGO_ENABLED=1 CC=gcc GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build \
@@ -74,7 +84,9 @@ COPY NOTICE /usr/share/doc/graphite-remote-adapter/NOTICE
 COPY LICENSE /usr/share/doc/graphite-remote-adapter/LICENSE
 
 # Install runtime dependencies
-RUN apk add --no-cache lz4-libs=1.10.0-r0
+# renovate: datasource=repology depName=alpine_3_23/lz4-libs versioning=loose alpine-minor=3.23
+ARG LZ4_LIBS_VERSION=1.10.0-r0
+RUN apk add --no-cache lz4-libs=${LZ4_LIBS_VERSION}
 
 RUN chmod +x /bin/graphite-remote-adapter \
     && addgroup ${GROUP_NAME} \
