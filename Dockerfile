@@ -42,15 +42,15 @@ COPY web/ web/
 COPY VERSION VERSION
 
 # Install LZ4 libraries to build
-# renovate: datasource=repology depName=alpine_3_23/openssl versioning=loose alpine-minor=3.23
-ARG OPENSSL_VERSION=3.5.6-r0
-# renovate: datasource=repology depName=alpine_3_23/make versioning=loose alpine-minor=3.23
+# renovate: datasource=repology depName=alpine_3_23/openssl versioning=apk
+ARG OPENSSL_VERSION=3.5.7-r0
+# renovate: datasource=repology depName=alpine_3_23/make versioning=apk
 ARG MAKE_VERSION=4.4.1-r3
-# renovate: datasource=repology depName=alpine_3_23/build-base versioning=loose alpine-minor=3.23
+# renovate: datasource=repology depName=alpine_3_23/build-base versioning=apk
 ARG BUILD_BASE_VERSION=0.5-r3
-# renovate: datasource=repology depName=alpine_3_23/lz4-dev versioning=loose alpine-minor=3.23
+# renovate: datasource=repology depName=alpine_3_23/lz4-dev versioning=apk
 ARG LZ4_DEV_VERSION=1.10.0-r0
-# renovate: datasource=repology depName=alpine_3_23/lz4 versioning=loose alpine-minor=3.23
+# renovate: datasource=repology depName=alpine_3_23/lz4 versioning=apk
 ARG LZ4_VERSION=1.10.0-r0
 RUN apk add --no-cache \
         openssl=${OPENSSL_VERSION} \
@@ -84,7 +84,7 @@ COPY NOTICE /usr/share/doc/graphite-remote-adapter/NOTICE
 COPY LICENSE /usr/share/doc/graphite-remote-adapter/LICENSE
 
 # Install runtime dependencies
-# renovate: datasource=repology depName=alpine_3_23/lz4-libs versioning=loose alpine-minor=3.23
+# renovate: datasource=repology depName=alpine_3_23/lz4-libs versioning=apk syncWith=alpine
 ARG LZ4_LIBS_VERSION=1.10.0-r0
 RUN apk add --no-cache lz4-libs=${LZ4_LIBS_VERSION}
 

@@ -15,7 +15,7 @@
 
 * [Go version](https://go.dev/dl/) version `1.21+`
 * [Windows Subsystem for Linux 2 (WSL2)](https://docs.microsoft.com/en-us/windows/wsl/install)
-* [Ubuntu for WSL2](https://canonical-ubuntu-wsl.readthedocs-hosted.com/en/latest/guides/install-ubuntu-wsl2/)
+* [Ubuntu for WSL2](https://documentation.ubuntu.com/wsl/latest/guides/install-ubuntu-wsl2/)
 * Docker on wsl.
 * IDE for Go, we recommended to use:
   * either [Visual Studio Code](https://code.visualstudio.com/), free
