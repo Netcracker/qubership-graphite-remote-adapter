@@ -17,7 +17,7 @@ jobs:
     outputs:
       is-restricted: ${{ steps.config.outputs.is-restricted }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Check if actor is restricted
         id: config
         env:
@@ -41,7 +41,7 @@ jobs:
       pull-requests: write
     steps:
     - name: Scan issue or pull request for profanity
-      uses: IEvangelist/profanity-filter@10.0
+      uses: IEvangelist/profanity-filter@7d6e0c79ee3d33ae09b5ed0c6e2fa04b9c512e08 # 10.0
       id: profanity-filter
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
