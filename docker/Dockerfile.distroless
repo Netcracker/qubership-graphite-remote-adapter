@@ -53,7 +53,7 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 GO111MODULE=on \
     -v -o /build/graphite-remote-adapter ./
 
 # Use distroless image
-FROM gcr.io/distroless/base-debian12
+FROM gcr.io/distroless/base-debian12@sha256:62730825d3cf03571e0a1b8f014748de94d0404500f063593b614c23da38841d
 
 COPY --from=builder --chown=${USER_UID} /build/graphite-remote-adapter /bin/graphite-remote-adapter
 
