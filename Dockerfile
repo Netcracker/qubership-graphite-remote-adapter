@@ -85,7 +85,7 @@ COPY LICENSE /usr/share/doc/graphite-remote-adapter/LICENSE
 
 # Install runtime dependencies
 # renovate: datasource=repology depName=alpine_3_24/lz4-libs versioning=apk syncWith=alpine
-ARG LZ4_LIBS_VERSION=1.10.0-r0
+ARG LZ4_LIBS_VERSION=1.10.0-r1
 RUN apk add --no-cache lz4-libs=${LZ4_LIBS_VERSION}
 
 RUN chmod +x /bin/graphite-remote-adapter \
