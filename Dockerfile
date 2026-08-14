@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Build the adapter binary
-FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine3.23@sha256:622e56dbc11a8cfe87cafa2331e9a201877271cbff918af53d3be315f3da88cc AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.6-alpine@sha256:af8d6740070b8906d12eae1c3e3ea0957fb63f492051ea05e354c38ef9fe88df AS builder
 
 ARG BUILDPLATFORM
 ARG TARGETOS
@@ -42,16 +42,16 @@ COPY web/ web/
 COPY VERSION VERSION
 
 # Install LZ4 libraries to build
-# renovate: datasource=repology depName=alpine_3_23/openssl versioning=apk
+# renovate: datasource=repology depName=alpine_3_24/openssl versioning=apk
 ARG OPENSSL_VERSION=3.5.7-r0
-# renovate: datasource=repology depName=alpine_3_23/make versioning=apk
-ARG MAKE_VERSION=4.4.1-r3
-# renovate: datasource=repology depName=alpine_3_23/build-base versioning=apk
-ARG BUILD_BASE_VERSION=0.5-r3
-# renovate: datasource=repology depName=alpine_3_23/lz4-dev versioning=apk
-ARG LZ4_DEV_VERSION=1.10.0-r0
-# renovate: datasource=repology depName=alpine_3_23/lz4 versioning=apk
-ARG LZ4_VERSION=1.10.0-r0
+# renovate: datasource=repology depName=alpine_3_24/make versioning=apk
+ARG MAKE_VERSION=4.4.1-r4
+# renovate: datasource=repology depName=alpine_3_24/build-base versioning=apk
+ARG BUILD_BASE_VERSION=0.5-r4
+# renovate: datasource=repology depName=alpine_3_24/lz4-dev versioning=apk
+ARG LZ4_DEV_VERSION=1.10.0-r1
+# renovate: datasource=repology depName=alpine_3_24/lz4 versioning=apk
+ARG LZ4_VERSION=1.10.0-r1
 RUN apk add --no-cache \
         openssl=${OPENSSL_VERSION} \
         make=${MAKE_VERSION} \
