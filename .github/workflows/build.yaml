@@ -107,7 +107,7 @@ jobs:
 
   multiplatform_publish:
     needs: [prepare]
-    if: github.event_name != 'pull_request' && needs.prepare.outputs.is-restricted != 'true'
+    if: (github.event_name == 'release' || github.ref == 'refs/heads/main') && needs.prepare.outputs.is-restricted != 'true'
     permissions:
       contents: read
       packages: write
