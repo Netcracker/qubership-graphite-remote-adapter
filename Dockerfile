@@ -43,7 +43,7 @@ COPY VERSION VERSION
 
 # Install LZ4 libraries to build
 # renovate: datasource=repology depName=alpine_3_24/openssl versioning=apk
-ARG OPENSSL_VERSION=3.5.7-r0
+ARG OPENSSL_VERSION=3.5.8-r0
 # renovate: datasource=repology depName=alpine_3_24/make versioning=apk
 ARG MAKE_VERSION=4.4.1-r4
 # renovate: datasource=repology depName=alpine_3_24/build-base versioning=apk
