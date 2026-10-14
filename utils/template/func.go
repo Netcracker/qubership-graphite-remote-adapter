@@ -39,7 +39,7 @@ func split(input interface{}, delimiter string) ([]string, error) {
 // isSet indicate is a field is defined in the template data
 func isSet(v interface{}, name string) bool {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Ptr {
+	if rv.Kind() == reflect.Pointer {
 		rv = rv.Elem()
 	}
 	if rv.Kind() != reflect.Struct {
