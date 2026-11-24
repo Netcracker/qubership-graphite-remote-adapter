@@ -32,7 +32,7 @@ import (
 
 /*
 #cgo CFLAGS: -I/usr/include
-#cgo linux LDFLAGS: -l:liblz4.so
+#cgo linux LDFLAGS: -llz4
 #include <lz4frame.h>
 #include <stdlib.h>
 */
